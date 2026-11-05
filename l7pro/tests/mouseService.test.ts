@@ -133,6 +133,43 @@ describe("MouseService: writes", () => {
     expect(s.snapshot().state?.dpi[2]).toBe(1164);
   });
 
+  it("setDpiLevel with a Y writes a separate Y and leaves the other levels alone; without a Y the level stays linked", async () => {
+    const link = new FakeLink();
+    const s = make(() => link);
+    s.start();
+    await until(() => s.snapshot().connection === "connected");
+
+    await s.setDpiLevel(0, 400, 1126);
+    expect(link.dpi).toEqual([400, 800, 1229, 3200, 6400, 26000]);
+    expect(link.dpiY).toEqual([1126, 800, 1229, 3200, 6400, 26000]);
+    await s.setDpiLevel(1, 900);
+    expect(link.dpiY).toEqual([1126, 900, 1229, 3200, 6400, 26000]);
+    await s.setDpiLevel(0, 400, 400);
+    expect(link.dpiY[0]).toBe(400);
+    expect(s.snapshot().state?.dpiY[0]).toBe(400);
+  });
+
+  it("setDpiLevel rejects a Y out of range without sending", async () => {
+    const link = new FakeLink();
+    const s = make(() => link);
+    s.start();
+    await until(() => s.snapshot().connection === "connected");
+    await expect(s.setDpiLevel(0, 400, 100)).rejects.toThrow();
+    expect(link.writes).toHaveLength(0);
+  });
+
+  it("Restore defaults and the level count keep the Y consistent (factory = linked, count keeps a separate Y)", async () => {
+    const link = new FakeLink();
+    const s = make(() => link);
+    s.start();
+    await until(() => s.snapshot().connection === "connected");
+    await s.setDpiLevel(0, 400, 1126);
+    await s.setLevelCount(4);
+    expect(link.dpiY[0]).toBe(1126);
+    await s.restoreDpiDefaults();
+    expect(link.dpiY).toEqual(link.dpi);
+  });
+
   it.each([[2, 100], [2, 26001], [6, 800], [-1, 800]])("setDpiLevel(%s, %s) rejects without sending", async (level, dpi) => {
     const link = new FakeLink();
     const s = make(() => link);

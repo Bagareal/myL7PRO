@@ -11,6 +11,7 @@ export class FakeLink implements HidLink {
   usbRate = 2;
   wirelessRate = 2;
   dpi = [400, 800, 1229, 3200, 6400, 26000];
+  dpiY = [400, 800, 1229, 3200, 6400, 26000];
   activeLevels = 3;
   pid = 0x1020;
   battery = 93;
@@ -51,6 +52,8 @@ export class FakeLink implements HidLink {
       this.dpi.forEach((v, i) => {
         d[4 + i * 2] = v & 0xff;
         d[5 + i * 2] = v >> 8;
+      });
+      this.dpiY.forEach((v, i) => {
         d[51 + i * 2] = v & 0xff;
         d[52 + i * 2] = v >> 8;
       });
@@ -88,6 +91,7 @@ export class FakeLink implements HidLink {
       this.usbDpiIndex = l[1];
       this.wirelessDpiIndex = l[2];
       this.dpi = Array.from({ length: 6 }, (_, i) => l[4 + i * 2] | (l[5 + i * 2] << 8));
+      this.dpiY = Array.from({ length: 6 }, (_, i) => l[18 + i * 2] | (l[19 + i * 2] << 8));
       this.activeLevels = l[16];
     }
     if (l[0] === 0x42) {

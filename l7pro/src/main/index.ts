@@ -107,7 +107,7 @@ if (!app.requestSingleInstanceLock()) {
       return service.setProfile(profile);
     });
     ipcMain.handle(CHANNELS.renameProfile, (_e, slot: number, name: string) => service.renameProfile(slot, name));
-    ipcMain.handle(CHANNELS.setDpiLevel, (_e, level: number, dpi: number) => service.setDpiLevel(level, dpi));
+    ipcMain.handle(CHANNELS.setDpiLevel, (_e, level: number, dpi: number, dpiY?: number) => service.setDpiLevel(level, dpi, dpiY));
     ipcMain.handle(CHANNELS.setPolling, (_e, hz: number) => service.setPolling(hz));
     ipcMain.handle(CHANNELS.setLevelCount, (_e, count: number) => service.setLevelCount(count));
     ipcMain.handle(CHANNELS.removeLevel, (_e, index: number) => service.removeLevel(index));

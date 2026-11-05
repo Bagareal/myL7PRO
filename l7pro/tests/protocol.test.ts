@@ -117,6 +117,25 @@ describe("buildDpiWrite", () => {
     expect(b[1 + 19] ^ 0xff).toBe(400 >> 8);
   });
 
+  it("writes a separate Y axis exactly like the real M HUB capture (Y of level 0 = 1126, X unchanged)", () => {
+    const s0 = { ...state, usbDpiIndex: 0, wirelessDpiIndex: 0, dpi: [400, 800, 1600, 3200, 6400, 26000], dpiY: [400, 800, 1600, 3200, 6400, 26000], activeLevels: 3 };
+    const b = buildDpiWrite(s0, s0.dpi, 3, [1126, 800, 1600, 3200, 6400, 26000]);
+    expect(head(b, 20)).toBe("12 bf ff ff fd 6f fe df fc bf f9 7f f3 ff e6 6f 9a fc 00 99");
+    expect(b[1 + 19] ^ 0xff).toBe(0x04);
+  });
+
+  it("without an explicit Y it keeps a Y that was already separate and follows X where they were equal", () => {
+    const sep = { ...state, dpiY: [400, 1000, 1229, 3200, 6400, 26000] };
+    const b = buildDpiWrite(sep, [500, 900, 1229, 3200, 6400, 26000]);
+    const y = Array.from({ length: 6 }, (_, i) => (b[1 + 18 + i * 2] ^ 0xff) | ((b[1 + 19 + i * 2] ^ 0xff) << 8));
+    expect(y).toEqual([500, 1000, 1229, 3200, 6400, 26000]);
+  });
+
+  it("rejects a Y value out of range or the wrong number of Y values", () => {
+    expect(() => buildDpiWrite(state, state.dpi, 3, [400, 800, 1229, 3200, 6400, 26001])).toThrow();
+    expect(() => buildDpiWrite(state, state.dpi, 3, [400, 800])).toThrow();
+  });
+
   it.each([199, 26001, NaN, 1000.5])("rejects the DPI value %s", (v) => {
     expect(() => buildDpiWrite(state, [400, 800, v, 3200, 6400, 26000])).toThrow();
   });
@@ -142,6 +161,12 @@ describe("buildDpiWrite", () => {
 
 describe("buildLevelRemoval", () => {
   const logical = (b: Buffer) => Array.from(b.subarray(1), (x) => x ^ 0xff);
+
+  it("keeps each Y with its level", () => {
+    const l = logical(buildLevelRemoval({ ...state, dpiY: [400, 1000, 1229, 3200, 6400, 26000] }, 0));
+    const y = Array.from({ length: 6 }, (_, i) => l[18 + i * 2] | (l[19 + i * 2] << 8));
+    expect(y).toEqual([1000, 1229, 400, 3200, 6400, 26000]);
+  });
   const levels = (l: number[]) => Array.from({ length: 6 }, (_, i) => l[4 + i * 2] | (l[5 + i * 2] << 8));
 
   it("removing the first level shifts the others, the counter drops and the active index follows its level", () => {

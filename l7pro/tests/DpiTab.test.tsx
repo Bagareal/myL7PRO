@@ -60,7 +60,7 @@ describe("DPI tab: levels", () => {
     move(2, 6);
     expect(applyDpi().disabled).toBe(false);
     fireEvent.click(applyDpi());
-    await waitFor(() => expect(api.calls).toEqual([["setDpiLevel", 2, sliderToDpi(6)]]));
+    await waitFor(() => expect(api.calls).toEqual([["setDpiLevel", 2, sliderToDpi(6), sliderToDpi(6)]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -71,8 +71,8 @@ describe("DPI tab: levels", () => {
     fireEvent.click(applyDpi());
     await waitFor(() =>
       expect(api.calls).toEqual([
-        ["setDpiLevel", 0, sliderToDpi(9)],
-        ["setDpiLevel", 2, sliderToDpi(6)],
+        ["setDpiLevel", 0, sliderToDpi(9), sliderToDpi(9)],
+        ["setDpiLevel", 2, sliderToDpi(6), sliderToDpi(6)],
       ]),
     );
   });
@@ -86,6 +86,46 @@ describe("DPI tab: levels", () => {
     await waitFor(() => expect(applyDpi().disabled).toBe(false));
     fireEvent.click(applyDpi());
     expect((await screen.findByRole("alert")).textContent).toContain("Mouse not connected");
+  });
+});
+
+describe("DPI tab: separate X/Y", () => {
+  const toggle = () => screen.getByRole("checkbox", { name: "Separate X/Y" }) as HTMLInputElement;
+  const sliderY = (n: number) => screen.getByRole("slider", { name: `Level ${n} Y` }) as HTMLInputElement;
+
+  it("is off when Y equals X, and then there are no Y sliders", async () => {
+    await open();
+    expect(toggle().checked).toBe(false);
+    expect(screen.queryByRole("slider", { name: "Level 0 Y" })).toBeNull();
+  });
+
+  it("is on from the start when a level in use has a different Y", async () => {
+    const snap = connectedSnapshot();
+    snap.state = { ...snap.state!, dpiY: [400, 1000, 1229, 3200, 6400, 26000] };
+    await open(snap);
+    expect(toggle().checked).toBe(true);
+    expect(sliderY(1).value).toBe(String(dpiToSlider(1000)));
+    expect(screen.getAllByRole("slider")).toHaveLength(6);
+  });
+
+  it("turning it on shows the Y sliders with Y = X, and moving Y writes that level with its own Y", async () => {
+    const api = await open();
+    fireEvent.click(toggle());
+    expect(sliderY(0).value).toBe(String(dpiToSlider(400)));
+    expect(applyDpi().disabled).toBe(true);
+    fireEvent.change(sliderY(0), { target: { value: "6" } });
+    fireEvent.click(applyDpi());
+    await waitFor(() => expect(api.calls).toEqual([["setDpiLevel", 0, 400, sliderToDpi(6)]]));
+  });
+
+  it("turning it off with a separate Y makes Apply write Y = X for that level", async () => {
+    const snap = connectedSnapshot();
+    snap.state = { ...snap.state!, dpiY: [400, 1000, 1229, 3200, 6400, 26000] };
+    const api = await open(snap);
+    fireEvent.click(toggle());
+    expect(screen.queryByRole("slider", { name: "Level 1 Y" })).toBeNull();
+    fireEvent.click(applyDpi());
+    await waitFor(() => expect(api.calls).toEqual([["setDpiLevel", 1, 800, 800]]));
   });
 });
 

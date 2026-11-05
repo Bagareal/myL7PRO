@@ -12,7 +12,7 @@ const api: L7Api = {
   },
   setProfile: (profile) => ipcRenderer.invoke(CHANNELS.setProfile, profile),
   renameProfile: (slot, name) => ipcRenderer.invoke(CHANNELS.renameProfile, slot, name),
-  setDpiLevel: (level, dpi) => ipcRenderer.invoke(CHANNELS.setDpiLevel, level, dpi),
+  setDpiLevel: (level, dpi, dpiY) => ipcRenderer.invoke(CHANNELS.setDpiLevel, level, dpi, dpiY),
   setPolling: (hz) => ipcRenderer.invoke(CHANNELS.setPolling, hz),
   setLevelCount: (count) => ipcRenderer.invoke(CHANNELS.setLevelCount, count),
   removeLevel: (index) => ipcRenderer.invoke(CHANNELS.removeLevel, index),

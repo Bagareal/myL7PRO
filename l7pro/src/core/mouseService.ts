@@ -174,14 +174,18 @@ export class MouseService {
     });
   }
 
-  setDpiLevel(level: number, dpi: number): Promise<void> {
+  /** Sets one level. With dpiY the Y axis is written as given (equal to dpi = linked); without it, see buildDpiWrite. */
+  setDpiLevel(level: number, dpi: number, dpiY?: number): Promise<void> {
     return this.write((mouse, state) => {
       if (!Number.isInteger(level) || level < 0 || level >= DPI_LEVELS) {
         throw new Error(`Invalid DPI level: ${level} (allowed 0..${DPI_LEVELS - 1})`);
       }
       const next = [...state.dpi];
       next[level] = dpi;
-      return buildDpiWrite(state, next);
+      if (dpiY === undefined) return buildDpiWrite(state, next);
+      const nextY = [...state.dpiY];
+      nextY[level] = dpiY;
+      return buildDpiWrite(state, next, state.activeLevels, nextY);
     });
   }
 
@@ -197,7 +201,7 @@ export class MouseService {
 
   /** M HUB factory values (Restore defaults): six levels, all in use. The active index stays valid. */
   restoreDpiDefaults(): Promise<void> {
-    return this.write((_mouse, state) => buildDpiWrite(state, DPI_FACTORY, DPI_LEVELS));
+    return this.write((_mouse, state) => buildDpiWrite(state, DPI_FACTORY, DPI_LEVELS, DPI_FACTORY));
   }
 
   /** LOD, ripple, angle snapping, motion sync, rotate (0x11 0x42). Never the mode. */

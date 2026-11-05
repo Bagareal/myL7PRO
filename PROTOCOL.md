@@ -400,6 +400,7 @@ Other assignments captured on button 3 (Advance), same format `52 idx 00 type v1
 - Wheel up: `52 03 00 01 00 02 00`
 - DPI +: `52 03 00 05 02 00 00`
 - DPI switch: `52 03 00 05 01 00 00`
+- DPI -: `52 03 00 05 03 00 00` (captured 2026-11-05, CERTAIN)
 - Restore defaults: `52 03 00 00 00 00 00`
 
 Keyboard (type 2), button 3 (CERTAIN): A `52 03 00 02 00 04 00`, Enter `52 03 00 02 00 28 00`, F5 `52 03 00 02 00 3e 00`. Value = `00 KK 00` with KK = HID usage of the keyboard page; the first byte is the modifier mask.
@@ -413,3 +414,13 @@ Multimedia (type 3, value = consumer usage in one byte + `00 00`) and system sho
 Also captured (CERTAIN, button 3, 2026-11-05): Left `52 03 00 01 01 00 00`, Right `... 01 02 00 00`, Middle `... 01 04 00 00`, Advance `... 01 10 00 00`, Wheel down `... 01 00 fe 00`, Volume - `... 03 ea 00 00`, Previous `... 03 b6 00 00`, Stop `... 03 b7 00 00`, Cut `... 08 07 01 1b`, Paste `... 08 07 01 19`. So table 5.7 is confirmed for all Mouse, Multimedia, Edit and keyboard functions (with Ctrl/Shift/Alt/Windows) and Disable. NOT captured: DPI - (probably `05 03 00 00`), profile switch (type 10), Shortcut, brightness, macros, Hotkey with right-hand modifiers.
 
 Button indexes: 0 left, 1 middle, 2 right, 3 Advance, 4 Back (from the driver's buttonIndexMap, confirmed for 3).
+
+### 10.20 Separate X/Y DPI (real M HUB capture, 2026-11-05, CERTAIN)
+
+There is no flag on the mouse: "Separate X/Y settings" only decides whether M HUB writes Y different from X. M HUB always writes the same 0x12 0x40 command (10.6), with the Y fields at logical offsets 18..29 (uint16 LE per level). Observed with the profile at levels 400, 800, 1600, 3200, 6400, 26000 (3 in use):
+
+- Switch on: one write with Y equal to X.
+- Dragging the Y slider of level 0: one full write per slider step, only Y0 changes (e.g. `99 fb` inverted = 0x0466 = 1126, then `51 fe` = 0x01AE = 430); X and the other Y values stay as they were.
+- Switch off: one write with Y equal to X again.
+
+The app treats a level as separate when Y differs from X; every write keeps the Y that was read (Restore defaults and the switch off write Y = X).

@@ -21,6 +21,7 @@ describe("buildKeyWrite (0x12 0x52, real M HUB captures, button 3)", () => {
     ["Back", functionById("back").action, "12 ad fc ff fe f7 ff ff"],
     ["Wheel up", functionById("wheel-up").action, "12 ad fc ff fe ff fd ff"],
     ["DPI +", functionById("dpi-plus").action, "12 ad fc ff fa fd ff ff"],
+    ["DPI -", functionById("dpi-minus").action, "12 ad fc ff fa fc ff ff"],
     ["DPI switch", functionById("dpi-switch").action, "12 ad fc ff fa fe ff ff"],
     ["A", keyboardAction(0x04, 0), "12 ad fc ff fd ff fb ff"],
     ["Enter", keyboardAction(0x28, 0), "12 ad fc ff fd ff d7 ff"],
@@ -63,7 +64,6 @@ describe("buildKeyWrite (0x12 0x52, real M HUB captures, button 3)", () => {
 describe("function catalog", () => {
   it("does not contain functions that were not captured", () => {
     const ids = FUNCTIONS.map((f) => f.id);
-    expect(ids).not.toContain("dpi-minus");
     expect(FUNCTIONS.some((f) => f.action.type === 10 || f.action.type === 4)).toBe(false);
   });
   it("has unique ids", () => {

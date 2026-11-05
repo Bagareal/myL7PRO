@@ -221,13 +221,20 @@ export function buildPollingWrite(wireless: boolean, index: number): Buffer {
   return encodeRequest(REPORT_SHORT, 0x41, wireless ? [0, index] : [index, 0]);
 }
 
-/** Builds 0x12 0x40: active indexes (usb, wireless), reserved byte, six X levels (and equal Y), counter. */
-function encodeDpiWrite(usbIndex: number, wirelessIndex: number, reserved: number, dpi: number[], count: number): Buffer {
-  if (dpi.length !== DPI_LEVELS) throw new Error("Exactly 6 DPI levels are required");
+/** Builds 0x12 0x40: active indexes (usb, wireless), reserved byte, six X levels, counter, six Y levels. */
+function encodeDpiWrite(
+  usbIndex: number,
+  wirelessIndex: number,
+  reserved: number,
+  dpi: number[],
+  dpiY: number[],
+  count: number,
+): Buffer {
+  if (dpi.length !== DPI_LEVELS || dpiY.length !== DPI_LEVELS) throw new Error("Exactly 6 DPI levels are required");
   if (!Number.isInteger(count) || count < 1 || count > DPI_LEVELS) {
     throw new Error(`Invalid number of levels: ${count} (allowed 1..${DPI_LEVELS})`);
   }
-  for (const v of dpi) {
+  for (const v of [...dpi, ...dpiY]) {
     if (!Number.isInteger(v) || v < DPI_MIN || v > DPI_MAX) {
       throw new Error(`Invalid DPI: ${v} (allowed ${DPI_MIN}..${DPI_MAX})`);
     }
@@ -235,21 +242,29 @@ function encodeDpiWrite(usbIndex: number, wirelessIndex: number, reserved: numbe
   const args = [usbIndex, wirelessIndex, reserved];
   for (const v of dpi) args.push(v & 0xff, v >> 8);
   args.push(count, 0xff);
-  for (const v of dpi) args.push(v & 0xff, v >> 8);
+  for (const v of dpiY) args.push(v & 0xff, v >> 8);
   return encodeRequest(REPORT_LONG, 0x40, args);
 }
 
 /**
  * 0x12 0x40: writes the six DPI levels. The reserved byte is the one that was read; the active indexes stay those
  * that were read, unless they must fit within the number of levels in use (activeLevels, by default the one read).
+ * Y axis: if dpiY is not given, a level whose Y was equal to X stays linked (Y follows the new X) and a level with a
+ * separate Y keeps it. M HUB writes Y independently of X (PROTOCOL.md 10.20).
  */
-export function buildDpiWrite(state: ProfileState, dpi: number[], activeLevels: number = state.activeLevels): Buffer {
+export function buildDpiWrite(
+  state: ProfileState,
+  dpi: number[],
+  activeLevels: number = state.activeLevels,
+  dpiY: number[] = dpi.map((x, i) => (state.dpiY[i] === state.dpi[i] ? x : state.dpiY[i])),
+): Buffer {
   const last = Math.max(0, activeLevels - 1);
   return encodeDpiWrite(
     Math.min(state.usbDpiIndex, last),
     Math.min(state.wirelessDpiIndex, last),
     state.reserved,
     dpi,
+    dpiY,
     activeLevels,
   );
 }
@@ -267,8 +282,11 @@ export function buildLevelRemoval(state: ProfileState, index: number): Buffer {
   const inUse = state.dpi.slice(0, count);
   const [removed] = inUse.splice(index, 1);
   const dpi = [...inUse, removed, ...state.dpi.slice(count)];
+  const inUseY = state.dpiY.slice(0, count);
+  const [removedY] = inUseY.splice(index, 1);
+  const dpiY = [...inUseY, removedY, ...state.dpiY.slice(count)];
   const follow = (active: number) => Math.min(active > index ? active - 1 : active, count - 2);
-  return encodeDpiWrite(follow(state.usbDpiIndex), follow(state.wirelessDpiIndex), state.reserved, dpi, count - 1);
+  return encodeDpiWrite(follow(state.usbDpiIndex), follow(state.wirelessDpiIndex), state.reserved, dpi, dpiY, count - 1);
 }
 
 // ---------- 0xE2 notification ----------

@@ -63,7 +63,7 @@ export interface L7Api {
   onSnapshot(fn: (s: Snapshot) => void): () => void;
   setProfile(profile: number): Promise<void>;
   renameProfile(slot: number, name: string): Promise<void>;
-  setDpiLevel(level: number, dpi: number): Promise<void>;
+  setDpiLevel(level: number, dpi: number, dpiY?: number): Promise<void>;
   setPolling(hz: number): Promise<void>;
   setLevelCount(count: number): Promise<void>;
   removeLevel(index: number): Promise<void>;

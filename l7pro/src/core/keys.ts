@@ -28,7 +28,7 @@ const fn = (id: string, label: string, group: KeyGroup, type: number, value: [nu
   action: { type, value },
 });
 
-/** Only functions captured with M HUB (PROTOCOL.md 10.19): no DPI -, profile switch, Shortcut or macros. */
+/** Only functions captured with M HUB (PROTOCOL.md 10.19): no profile switch or macros. */
 export const FUNCTIONS: readonly KeyFunction[] = [
   fn("left", "Left button", "Mouse", 1, [0x01, 0, 0]),
   fn("right", "Right button", "Mouse", 1, [0x02, 0, 0]),
@@ -38,6 +38,7 @@ export const FUNCTIONS: readonly KeyFunction[] = [
   fn("wheel-up", "Wheel up", "Mouse", 1, [0, 0x02, 0]),
   fn("wheel-down", "Wheel down", "Mouse", 1, [0, 0xfe, 0]),
   fn("dpi-plus", "DPI +", "DPI", 5, [0x02, 0, 0]),
+  fn("dpi-minus", "DPI -", "DPI", 5, [0x03, 0, 0]),
   fn("dpi-switch", "DPI switch", "DPI", 5, [0x01, 0, 0]),
   fn("cut", "Cut", "Edit", 8, [0x07, 0x01, 0x1b]),
   fn("copy", "Copy", "Edit", 8, [0x07, 0x01, 0x06]),

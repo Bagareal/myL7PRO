@@ -68,7 +68,7 @@ export function installFakeApi(
     },
     setProfile: async (p) => void calls.push(["setProfile", p]),
     renameProfile: async (s, n) => void calls.push(["renameProfile", s, n]),
-    setDpiLevel: async (l, d) => void calls.push(["setDpiLevel", l, d]),
+    setDpiLevel: async (l, d, y) => void calls.push(["setDpiLevel", l, d, y]),
     setPolling: async (hz) => void calls.push(["setPolling", hz]),
     setLevelCount: async (n) => void calls.push(["setLevelCount", n]),
     removeLevel: async (i) => void calls.push(["removeLevel", i]),
