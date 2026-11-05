@@ -83,6 +83,7 @@ describe("DPI tab: livelli", () => {
       throw new Error("Mouse not connected");
     };
     move(2, 6);
+    await waitFor(() => expect(applyDpi().disabled).toBe(false));
     fireEvent.click(applyDpi());
     expect((await screen.findByRole("alert")).textContent).toContain("Mouse not connected");
   });

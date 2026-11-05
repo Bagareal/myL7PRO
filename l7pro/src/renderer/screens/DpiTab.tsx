@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DPI_LEVELS } from "../../core/protocol.js";
 import type { Snapshot } from "../../shared/api.js";
 import { SLIDER_MAX, dpiToSlider, sliderToDpi } from "../dpiScale.js";
@@ -17,7 +17,13 @@ export function DpiTab({ snap }: { snap: Snapshot }) {
   const [error, setError] = useState<string | null>(null);
 
   // Quando il mouse riporta valori diversi (dopo una scrittura o un cambio profilo) la modifica in corso si riallinea.
-  useEffect(() => setValues([...current]), [currentKey]);
+  // Non al primo disegno (i valori sono gia' quelli giusti): un effetto in ritardo cancellerebbe uno slider appena mosso.
+  const shownKey = useRef(currentKey);
+  useEffect(() => {
+    if (shownKey.current === currentKey) return;
+    shownKey.current = currentKey;
+    setValues([...current]);
+  }, [currentKey]);
 
   const levels = Array.from({ length: inUse }, (_, i) => i);
   const changed = levels.filter((i) => values[i] !== undefined && values[i] !== current[i]);
