@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DEBOUNCE_MAX, DEBOUNCE_MIN, ROTATE_LIMIT, SLEEP_MAX, parseSensor, type SensorChange } from "../../core/protocol.js";
 import type { Snapshot } from "../../shared/api.js";
+import topUrl from "../assets/l7_top.png";
 import { cleanError } from "../errors.js";
 
 const HEAVY_RATES = [4000, 8000];
@@ -35,8 +36,7 @@ function Dial({ angle }: { angle: number }) {
       })}
       <circle cx={dot.x} cy={dot.y} r="6" className="dial-dot" />
       <g transform={`rotate(${angle} ${c.x} ${c.y})`}>
-        <path className="dial-mouse" d="M110 66 C 92 66 84 90 84 118 C 84 146 94 156 110 156 C 126 156 136 146 136 118 C 136 90 128 66 110 66 Z" />
-        <line x1="110" y1="74" x2="110" y2="104" className="dial-seam" />
+        <image href={topUrl} x="76" y="46" width="68" height="128" preserveAspectRatio="xMidYMid meet" />
       </g>
       <text x={c.x} y={c.y + 6} className="dial-value" textAnchor="middle">{`${angle}°`}</text>
     </svg>

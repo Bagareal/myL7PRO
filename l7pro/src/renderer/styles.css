@@ -143,9 +143,7 @@ section > button + button { margin-left: 8px; }
 .dial .tick.major { stroke: var(--muted); stroke-width: 2; }
 .dial-label { fill: var(--muted); font-size: 11px; }
 .dial-dot { fill: var(--text); }
-.dial-mouse { fill: var(--muted); opacity: 0.55; }
-.dial-seam { stroke: var(--panel); stroke-width: 2; }
-.dial-value { fill: var(--text); font-size: 18px; font-weight: 700; }
+.dial-value { fill: #fff; font-size: 18px; font-weight: 700; paint-order: stroke; stroke: #000; stroke-width: 3px; }
 .rotate-slider { display: block; width: 190px; margin: 0 auto 4px; }
 .lod { display: flex; gap: 20px; font-size: 13px; }
 .lod label { display: flex; align-items: center; gap: 6px; }
