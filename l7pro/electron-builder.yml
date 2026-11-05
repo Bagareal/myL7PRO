@@ -9,6 +9,7 @@ asarUnpack:
   - node_modules/node-hid/**
   - node_modules/active-win/**
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: x64

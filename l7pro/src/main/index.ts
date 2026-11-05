@@ -45,6 +45,8 @@ function createWindow(): void {
     minWidth: 760,
     minHeight: 520,
     title: "myL7PRO",
+    // Nell'app installata vale l'icona dell'exe; il file serve solo in sviluppo.
+    ...(app.isPackaged ? {} : { icon: join(import.meta.dirname, "../../build/icon.png") }),
     show: !startHidden,
     webPreferences: {
       preload: join(import.meta.dirname, "../preload/index.cjs"),
