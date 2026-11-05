@@ -24,7 +24,7 @@ class FakeMouse implements ProfileMouse {
     if (this.reject) throw new Error("Mouse not connected");
     this.set({ state: { ...this.snap.state!, profile: p } });
   }
-  /** Cambio non fatto da noi (tasto del mouse). */
+  /** A change we did not make (a mouse button). */
   set(patch: Partial<Snapshot>) {
     this.snap = { ...this.snap, ...patch };
     this.listeners.forEach((l) => l(this.snap));
@@ -66,8 +66,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("Automation: scelta e applicazione", () => {
-  it("applica la regola solo dopo 500 ms di stabilita' e una volta sola", async () => {
+describe("Automation: choosing and applying", () => {
+  it("applies the rule only after 500 ms of stability, and only once", async () => {
     make();
     await advance(1000);
     expect(mouse.calls).toEqual([]);
@@ -80,7 +80,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(mouse.calls).toEqual([2]);
   });
 
-  it("non manda nulla se lo slot richiesto e' gia' attivo", async () => {
+  it("sends nothing if the requested slot is already active", async () => {
     mouse.snap = connectedSnapshot({ state: { ...connectedSnapshot().state!, profile: 2 } });
     fg = "r5apex.exe";
     make();
@@ -88,7 +88,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(mouse.calls).toEqual([]);
   });
 
-  it("A -> B -> A entro 500 ms non manda nulla", async () => {
+  it("A -> B -> A within 500 ms sends nothing", async () => {
     make();
     await advance(1000);
     fg = "r5apex.exe";
@@ -98,7 +98,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(mouse.calls).toEqual([]);
   });
 
-  it("senza nessuna regola l'automazione non fa niente, nemmeno verso il profilo normale", async () => {
+  it("with no rules automation does nothing, not even toward the normal profile", async () => {
     current.rules = [];
     mouse.snap = connectedSnapshot({ state: { ...connectedSnapshot().state!, profile: 2 } });
     fg = "chrome.exe";
@@ -107,7 +107,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(mouse.calls).toEqual([]);
   });
 
-  it("un programma senza regola riporta al profilo normale", async () => {
+  it("a program without a rule goes back to the normal profile", async () => {
     mouse.snap = connectedSnapshot({ state: { ...connectedSnapshot().state!, profile: 2 } });
     fg = "chrome.exe";
     make();
@@ -115,7 +115,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(mouse.calls).toEqual([0]);
   });
 
-  it("ignora programma sconosciuto e la finestra di L7 Pro: il profilo non cambia", async () => {
+  it("ignores an unknown program and the myL7PRO window: the profile does not change", async () => {
     fg = "r5apex.exe";
     make();
     await advance(1000);
@@ -128,7 +128,7 @@ describe("Automation: scelta e applicazione", () => {
     expect(auto.state().foreground).toBe("r5apex.exe");
   });
 
-  it("se getForeground lancia un errore, e' come un programma sconosciuto", async () => {
+  it("if getForeground throws, it is treated like an unknown program", async () => {
     fg = "r5apex.exe";
     make();
     await advance(1000);
@@ -150,8 +150,8 @@ describe("Automation: scelta e applicazione", () => {
   });
 });
 
-describe("Automation: mouse in sleep o scollegato", () => {
-  it("al risveglio applica una sola volta lo slot giusto per l'app di quel momento", async () => {
+describe("Automation: mouse asleep or unplugged", () => {
+  it("on wake-up applies the right slot once, for the app at that moment", async () => {
     mouse.snap = connectedSnapshot({ connection: "sleep" });
     make();
     fg = "chrome.exe";
@@ -162,12 +162,12 @@ describe("Automation: mouse in sleep o scollegato", () => {
     await advance(700);
     expect(mouse.calls).toEqual([]);
 
-    mouse.set({ connection: "connesso" });
+    mouse.set({ connection: "connected" });
     await advance(1000);
     expect(mouse.calls).toEqual([1]);
   });
 
-  it("setProfile che rifiuta non ferma il motore: riprova e poi si ferma", async () => {
+  it("a rejecting setProfile does not stop the engine: it retries and then settles", async () => {
     fg = "r5apex.exe";
     mouse.reject = true;
     make();
@@ -182,8 +182,8 @@ describe("Automation: mouse in sleep o scollegato", () => {
   });
 });
 
-describe("Automation: cambi manuali", () => {
-  it("noteManualChange blocca l'automazione finche' non cambia l'app", async () => {
+describe("Automation: manual changes", () => {
+  it("noteManualChange holds automation until the app changes", async () => {
     fg = "r5apex.exe";
     make();
     await advance(1000);
@@ -201,7 +201,7 @@ describe("Automation: cambi manuali", () => {
     expect(mouse.calls).toEqual([2, 0]);
   });
 
-  it("un cambio fatto dal mouse stesso mette l'automazione in attesa", async () => {
+  it("a change made by the mouse itself puts automation on hold", async () => {
     fg = "r5apex.exe";
     make();
     await advance(1000);
@@ -211,20 +211,20 @@ describe("Automation: cambi manuali", () => {
     expect(mouse.calls).toEqual([2]);
   });
 
-  it("il cambio di profilo al risveglio del mouse non conta come cambio manuale", async () => {
+  it("the profile change when the mouse wakes up does not count as a manual change", async () => {
     mouse.snap = connectedSnapshot({ connection: "sleep" });
     make();
     fg = "r5apex.exe";
     await advance(1000);
-    mouse.set({ connection: "connesso", state: { ...mouse.snap.state!, profile: 1 } });
+    mouse.set({ connection: "connected", state: { ...mouse.snap.state!, profile: 1 } });
     await advance(1000);
     expect(auto.state().hold).toBe(false);
     expect(mouse.calls).toEqual([2]);
   });
 });
 
-describe("Automation: modifiche alle regole e stato", () => {
-  it("refresh applica subito una regola nuova per l'app gia' in primo piano", async () => {
+describe("Automation: rule changes and state", () => {
+  it("refresh applies a new rule right away for the app already in the foreground", async () => {
     fg = "chrome.exe";
     make();
     await advance(1000);
@@ -235,7 +235,7 @@ describe("Automation: modifiche alle regole e stato", () => {
     expect(mouse.calls).toEqual([1]);
   });
 
-  it("state() e onState descrivono programma, regola e attesa", async () => {
+  it("state() and onState describe program, rule and hold", async () => {
     const seen: string[] = [];
     make();
     auto.onState((s) => seen.push(`${s.foreground}:${s.match.slot}:${s.hold}`));

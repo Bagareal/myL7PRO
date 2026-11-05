@@ -16,9 +16,9 @@ export interface TrayActions {
 
 const nameOf = (s: Snapshot, slot: number) => s.profileNames?.[slot] ?? `Profile ${slot + 1}`;
 
-/** Voci del menu dell'icona nella barra di sistema. */
+/** Menu entries of the system tray icon. */
 export function trayTemplate(snap: Snapshot, actions: TrayActions): TrayItem[] {
-  const connected = snap.connection === "connesso" && snap.state !== null;
+  const connected = snap.connection === "connected" && snap.state !== null;
   const active = snap.state?.profile ?? -1;
   return [
     { label: "Open myL7PRO", click: actions.open },
@@ -37,9 +37,9 @@ export function trayTemplate(snap: Snapshot, actions: TrayActions): TrayItem[] {
   ];
 }
 
-/** Testo che compare passando sopra l'icona. */
+/** Text shown when hovering the icon. */
 export function trayTooltip(snap: Snapshot): string {
-  if (snap.connection === "assente") return "myL7PRO - Mouse not found";
+  if (snap.connection === "absent") return "myL7PRO - Mouse not found";
   if (snap.connection === "sleep") return "myL7PRO - Mouse asleep";
   const profile = snap.state ? nameOf(snap, snap.state.profile) : "-";
   return `myL7PRO - Battery ${snap.battery ?? "-"}% - ${profile}`;

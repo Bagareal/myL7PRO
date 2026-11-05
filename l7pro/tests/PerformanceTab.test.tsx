@@ -17,8 +17,8 @@ const radio = (name: string) => screen.getByRole("radio", { name }) as HTMLInput
 const slider = (name: string) => screen.getByRole("slider", { name }) as HTMLInputElement;
 const release = (el: Element) => fireEvent.pointerUp(el);
 
-describe("Performance tab: valori letti", () => {
-  it("mostra i valori del profilo attivo con le descrizioni", async () => {
+describe("Performance tab: values read", () => {
+  it("shows the values of the active profile with the descriptions", async () => {
     await open();
     expect(radio("1 mm").checked).toBe(true);
     expect(radio("2 mm").checked).toBe(false);
@@ -34,7 +34,7 @@ describe("Performance tab: valori letti", () => {
     expect(screen.getByText(/The distance at which the mouse stops tracking/)).toBeTruthy();
   });
 
-  it("sleep 0 = Never sleep spuntato e slider fermo", async () => {
+  it("sleep 0 = Never sleep checked and the slider still", async () => {
     const s = connectedSnapshot();
     s.state = { ...s.state!, sleep: 0 };
     await open(s);
@@ -42,13 +42,13 @@ describe("Performance tab: valori letti", () => {
     expect(slider("Sleep timer").disabled).toBe(true);
   });
 
-  it("non mostra la selezione della modalita'", async () => {
+  it("does not show the mode selection", async () => {
     await open();
     expect(screen.queryByText("Performance Mode")).toBeNull();
     expect(screen.queryByText(/Mode selection/)).toBeNull();
   });
 
-  it("aprirla non scrive niente", async () => {
+  it("opening it writes nothing", async () => {
     const api = await open();
     expect(api.calls).toEqual([]);
   });
@@ -57,21 +57,21 @@ describe("Performance tab: valori letti", () => {
 describe("Performance tab: polling rate", () => {
   const rate = (hz: number) => screen.getByRole("radio", { name: `${hz} Hz` }) as HTMLInputElement;
 
-  it("offre solo le frequenze del dongle e segna quella attuale", async () => {
+  it("offers only the dongle's frequencies and marks the current one", async () => {
     await open(connectedSnapshot({ pollingRates: [125, 500, 1000] }));
     expect(screen.getAllByRole("radio", { name: /Hz$/ }).map((r) => r.getAttribute("aria-label"))).toEqual(["125 Hz", "500 Hz", "1000 Hz"]);
     expect(rate(1000).checked).toBe(true);
     expect(rate(500).checked).toBe(false);
   });
 
-  it("scegliere una frequenza la scrive subito, senza dialogo", async () => {
+  it("choosing a frequency writes it right away, without a dialog", async () => {
     const api = await open();
     fireEvent.click(rate(500));
     await waitFor(() => expect(api.calls).toEqual([["setPolling", 500]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("la selezione si sposta subito, senza aspettare la conferma del mouse", async () => {
+  it("the selection moves right away, without waiting for the mouse to confirm", async () => {
     await open();
     window.l7.setPolling = () => new Promise<void>(() => {});
     fireEvent.click(rate(500));
@@ -79,7 +79,7 @@ describe("Performance tab: polling rate", () => {
     expect(rate(1000).checked).toBe(false);
   });
 
-  it("se la scrittura fallisce la selezione torna al valore del mouse", async () => {
+  it("if the write fails the selection goes back to the mouse's value", async () => {
     await open();
     window.l7.setPolling = async () => {
       throw new Error("Mouse not connected");
@@ -89,21 +89,21 @@ describe("Performance tab: polling rate", () => {
     expect(rate(1000).checked).toBe(true);
   });
 
-  it.each([4000, 8000])("avvisa quando la frequenza attuale e' %s Hz", async (hz) => {
+  it.each([4000, 8000])("warns when the current frequency is %s Hz", async (hz) => {
     const s = connectedSnapshot();
     s.state = { ...s.state!, usbRateIndex: s.pollingRates.indexOf(hz), wirelessRateIndex: s.pollingRates.indexOf(hz) };
     await open(s);
     expect(screen.getByText("Higher power use and CPU load")).toBeTruthy();
   });
 
-  it("nessun avviso a 2000 Hz", async () => {
+  it("no warning at 2000 Hz", async () => {
     await open();
     expect(screen.queryByText("Higher power use and CPU load")).toBeNull();
   });
 });
 
-describe("Performance tab: scritture", () => {
-  it("gli interruttori scrivono subito, senza dialogo", async () => {
+describe("Performance tab: writes", () => {
+  it("the switches write right away, without a dialog", async () => {
     const api = await open();
     fireEvent.click(toggle("Ripple Control"));
     await waitFor(() => expect(api.calls).toEqual([["setSensor", { rippleControl: true }]]));
@@ -114,7 +114,7 @@ describe("Performance tab: scritture", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("interruttori e LOD si spostano subito, prima della conferma del mouse", async () => {
+  it("switches and LOD move right away, before the mouse confirms", async () => {
     await open();
     window.l7.setSensor = () => new Promise<void>(() => {});
     fireEvent.click(toggle("Ripple Control"));
@@ -123,13 +123,13 @@ describe("Performance tab: scritture", () => {
     expect(radio("2 mm").checked).toBe(true);
   });
 
-  it("il LOD scrive subito", async () => {
+  it("the LOD writes right away", async () => {
     const api = await open();
     fireEvent.click(radio("2 mm"));
     await waitFor(() => expect(api.calls).toEqual([["setSensor", { lodMm: 2 }]]));
   });
 
-  it("debounce: muovere non scrive, rilasciare scrive", async () => {
+  it("debounce: moving does not write, releasing does", async () => {
     const api = await open();
     fireEvent.change(slider("Key debounce time"), { target: { value: "9" } });
     expect(screen.getByText("9 ms")).toBeTruthy();
@@ -138,7 +138,7 @@ describe("Performance tab: scritture", () => {
     await waitFor(() => expect(api.calls).toEqual([["setDebounce", 9]]));
   });
 
-  it("sleep: rilasciare scrive i minuti; Never sleep scrive 0 e togliendolo torna all'ultimo valore", async () => {
+  it("sleep: releasing writes the minutes; Never sleep writes 0 and unchecking it goes back to the last value", async () => {
     const api = await open();
     fireEvent.change(slider("Sleep timer"), { target: { value: "10" } });
     release(slider("Sleep timer"));
@@ -147,7 +147,7 @@ describe("Performance tab: scritture", () => {
     await waitFor(() => expect(api.calls[1]).toEqual(["setSleep", 0]));
   });
 
-  it("rotate: il rilascio dello slider scrive l'angolo", async () => {
+  it("rotate: releasing the slider writes the angle", async () => {
     const api = await open();
     fireEvent.change(slider("Rotate"), { target: { value: "-7" } });
     expect(screen.getByText("-7°")).toBeTruthy();
@@ -156,7 +156,7 @@ describe("Performance tab: scritture", () => {
     await waitFor(() => expect(api.calls).toEqual([["setSensor", { rotate: -7 }]]));
   });
 
-  it("rotate: piu' clic su + e - diventano una sola scrittura", async () => {
+  it("rotate: several clicks on + and - become a single write", async () => {
     const api = await open();
     const plus = screen.getByRole("button", { name: "Rotate +1" });
     const minus = screen.getByRole("button", { name: "Rotate -1" });
@@ -168,7 +168,7 @@ describe("Performance tab: scritture", () => {
     await waitFor(() => expect(api.calls).toEqual([["setSensor", { rotate: 2 }]]));
   });
 
-  it("un errore di scrittura viene mostrato", async () => {
+  it("a write error is shown", async () => {
     await open();
     window.l7.setSensor = async () => {
       throw new Error("Mouse not connected");

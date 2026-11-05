@@ -10,13 +10,13 @@ const TABS = ["DPI", "Performance", "Keys", "Macros"] as const;
 type Tab = (typeof TABS)[number];
 
 /**
- * Pagina di un profilo. Il mouse espone i parametri solo del profilo attivo: per un profilo non attivo
- * non si mostra nessun valore (sarebbero di un altro profilo) ma solo la fascia con Switch.
+ * Page of one profile. The mouse only exposes the parameters of the active profile: for an inactive profile
+ * no value is shown (they would belong to another profile), only the band with Switch.
  */
 export function ProfilePage({ snap, slot }: { snap: Snapshot; slot: number }) {
   const [tab, setTab] = useState<Tab>("DPI");
   const [error, setError] = useState<string | null>(null);
-  const connected = snap.connection === "connesso" && snap.state !== null;
+  const connected = snap.connection === "connected" && snap.state !== null;
   const active = snap.state?.profile;
 
   async function switchHere() {

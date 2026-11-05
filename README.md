@@ -64,4 +64,4 @@ npm run check      # type check
 npm run dist       # build the Windows installer into l7pro/release
 ```
 
-Pushing a tag such as `v1.0.4` builds the installer on GitHub and publishes a release.
+Pushing a tag such as `v1.0.5` builds the installer on GitHub and publishes a release.

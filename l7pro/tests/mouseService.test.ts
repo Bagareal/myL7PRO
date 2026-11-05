@@ -6,7 +6,7 @@ import { FakeLink } from "./fakeLink.js";
 const until = async (cond: () => boolean, ms = 1000) => {
   const t0 = Date.now();
   while (!cond()) {
-    if (Date.now() - t0 > ms) throw new Error("timeout in attesa della condizione");
+    if (Date.now() - t0 > ms) throw new Error("timed out waiting for the condition");
     await new Promise((r) => setTimeout(r, 2));
   }
 };
@@ -21,16 +21,16 @@ afterEach(() => services.splice(0).forEach((s) => s.stop()));
 
 const hex = (b: Buffer, n: number) => Array.from(b.subarray(0, n), (x) => x.toString(16).padStart(2, "0")).join(" ");
 
-describe("MouseService: connessione", () => {
-  it("senza dispositivo resta 'assente' e si connette quando compare", async () => {
+describe("MouseService: connection", () => {
+  it("without a device it stays 'absent' and connects when one appears", async () => {
     let link: FakeLink | null = null;
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "assente");
+    await until(() => s.snapshot().connection === "absent");
     expect(s.snapshot().state).toBeNull();
 
     link = new FakeLink();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     const snap = s.snapshot();
     expect(snap.battery).toBe(93);
     expect(snap.wireless).toBe(true);
@@ -40,16 +40,16 @@ describe("MouseService: connessione", () => {
     expect(snap.firmware).toEqual({ mouse: "5.12.5.0", receiver: "5.7.6.0" });
   });
 
-  it("con PID 0x1021 offre solo 125, 500, 1000", async () => {
+  it("with PID 0x1021 it offers only 125, 500, 1000", async () => {
     const link = new FakeLink();
     link.pid = 0x1021;
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     expect(s.snapshot().pollingRates).toEqual([125, 500, 1000]);
   });
 
-  it("se le letture falliscono passa a 'sleep' senza scrivere nulla, poi si riprende", async () => {
+  it("if reads fail it goes to 'sleep' without writing anything, then recovers", async () => {
     const link = new FakeLink();
     link.failReads = true;
     const s = make(() => link);
@@ -59,27 +59,27 @@ describe("MouseService: connessione", () => {
     expect(link.writes).toHaveLength(0);
 
     link.failReads = false;
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
   });
 });
 
-describe("MouseService: scritture", () => {
-  it("setProfile invia il cambio profilo, rilegge e aggiorna lo snapshot", async () => {
+describe("MouseService: writes", () => {
+  it("setProfile sends the profile switch, reads back and updates the snapshot", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setProfile(1);
     expect(hex(link.writes[0], 4)).toBe("11 a7 fe ff");
     expect(s.snapshot().state?.profile).toBe(1);
   });
 
-  it("renameProfile invia 0x12 0x59, rilegge i nomi e aggiorna lo snapshot", async () => {
+  it("renameProfile sends 0x12 0x59, reads the names back and updates the snapshot", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     expect(s.snapshot().profileNames).toEqual(["Default1", "TheFinals", "Default3"]);
 
     await s.renameProfile(2, "Default3x");
@@ -87,31 +87,31 @@ describe("MouseService: scritture", () => {
     expect(s.snapshot().profileNames).toEqual(["Default1", "TheFinals", "Default3x"]);
   });
 
-  it("renameProfile con nome o slot non validi rifiuta senza inviare", async () => {
+  it("renameProfile with an invalid name or slot rejects without sending", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     await expect(s.renameProfile(2, "")).rejects.toThrow();
     await expect(s.renameProfile(5, "ok")).rejects.toThrow();
     expect(link.writes).toHaveLength(0);
     expect(s.snapshot().profileNames).toEqual(["Default1", "TheFinals", "Default3"]);
   });
 
-  it("setProfile fuori da 0..2 rifiuta senza inviare", async () => {
+  it("setProfile outside 0..2 rejects without sending", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     await expect(s.setProfile(5)).rejects.toThrow();
     expect(link.writes).toHaveLength(0);
   });
 
-  it("due setProfile senza await partono in ordine e vince l'ultimo", async () => {
+  it("two setProfile calls without await run in order and the last one wins", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     const a = s.setProfile(1);
     const b = s.setProfile(2);
@@ -120,11 +120,11 @@ describe("MouseService: scritture", () => {
     expect(s.snapshot().state?.profile).toBe(2);
   });
 
-  it("setDpiLevel cambia solo quel livello e lascia il resto com'era", async () => {
+  it("setDpiLevel changes only that level and leaves the rest as it was", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setDpiLevel(2, 1164);
     expect(link.dpi).toEqual([400, 800, 1164, 3200, 6400, 26000]);
@@ -133,22 +133,22 @@ describe("MouseService: scritture", () => {
     expect(s.snapshot().state?.dpi[2]).toBe(1164);
   });
 
-  it.each([[2, 100], [2, 26001], [6, 800], [-1, 800]])("setDpiLevel(%s, %s) rifiuta senza inviare", async (level, dpi) => {
+  it.each([[2, 100], [2, 26001], [6, 800], [-1, 800]])("setDpiLevel(%s, %s) rejects without sending", async (level, dpi) => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     await expect(s.setDpiLevel(level, dpi)).rejects.toThrow();
     expect(link.writes).toHaveLength(0);
   });
 
-  it("setLevelCount cambia solo il numero di livelli attivi e tiene l'indice attivo valido", async () => {
+  it("setLevelCount changes only the number of levels in use and keeps the active index valid", async () => {
     const link = new FakeLink();
     link.usbDpiIndex = 2;
     link.wirelessDpiIndex = 2;
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setLevelCount(2);
     expect(link.activeLevels).toBe(2);
@@ -160,13 +160,13 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(1);
   });
 
-  it("restoreDpiDefaults scrive i sei valori di fabbrica con sei livelli in uso, in una sola scrittura", async () => {
+  it("restoreDpiDefaults writes the six factory values with six levels in use, in a single write", async () => {
     const link = new FakeLink();
     link.usbDpiIndex = 2;
     link.wirelessDpiIndex = 2;
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.restoreDpiDefaults();
     expect(link.dpi).toEqual([400, 800, 1600, 3200, 6400, 26000]);
@@ -176,13 +176,13 @@ describe("MouseService: scritture", () => {
     expect(s.snapshot().state?.activeLevels).toBe(6);
   });
 
-  it("removeLevel toglie quel livello, fa scalare gli altri e tiene valido l'indice attivo", async () => {
+  it("removeLevel removes that level, shifts the others and keeps the active index valid", async () => {
     const link = new FakeLink();
     link.usbDpiIndex = 2;
     link.wirelessDpiIndex = 2;
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.removeLevel(0);
     expect(link.dpi).toEqual([800, 1229, 400, 3200, 6400, 26000]);
@@ -193,11 +193,11 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(1);
   });
 
-  it("setSensor scrive solo cio' che cambia, tiene il LOD e rilegge lo stato", async () => {
+  it("setSensor writes only what changes, keeps the LOD and reads the state back", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setSensor({ rippleControl: true });
     expect(link.sensor).toBe(0x15);
@@ -216,11 +216,11 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(5);
   });
 
-  it("setDebounce e setSleep scrivono e rileggono; never sleep = 0", async () => {
+  it("setDebounce and setSleep write and read back; never sleep = 0", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setDebounce(9);
     expect(s.snapshot().state?.debounce).toBe(9);
@@ -233,11 +233,11 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(3);
   });
 
-  it("setKey scrive il tasto e rilegge lo stato; restoreKeyDefaults rimette solo quelli cambiati", async () => {
+  it("setKey writes the button and reads the state back; restoreKeyDefaults restores only the changed ones", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setKey(3, functionById("mute").action);
     expect(link.keys[3]).toEqual({ type: 3, value: [0xe2, 0, 0] });
@@ -252,11 +252,11 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(4);
   });
 
-  it("setKey rifiuta senza scrivere se toglie l'ultimo click sinistro o se i dati non sono validi", async () => {
+  it("setKey rejects without writing if it removes the last left click or the data is invalid", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await expect(s.setKey(0, functionById("disable").action)).rejects.toThrow(/left click/);
     await expect(s.setKey(0, functionById("right").action)).rejects.toThrow(/left click/);
@@ -271,11 +271,11 @@ describe("MouseService: scritture", () => {
     expect(link.keys.slice(0, 5).every((k) => k.type === 0)).toBe(true);
   });
 
-  it("setPolling scrive freeRate in wireless e rifiuta valori fuori lista", async () => {
+  it("setPolling writes freeRate when wireless and rejects values outside the list", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     await s.setPolling(500);
     expect(hex(link.writes[0], 4)).toBe("11 be ff fe");
@@ -284,11 +284,11 @@ describe("MouseService: scritture", () => {
     expect(link.writes).toHaveLength(1);
   });
 
-  it("se la rilettura dopo la scrittura fallisce segnala errore e passa a 'sleep', poi si riprende", async () => {
+  it("if the read-back after a write fails it reports an error and goes to 'sleep', then recovers", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     link.failReadsAfterWrite = true;
     await expect(s.setProfile(2)).rejects.toThrow(/not verified/i);
@@ -297,61 +297,61 @@ describe("MouseService: scritture", () => {
 
     link.failReads = false;
     link.failReadsAfterWrite = false;
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     expect(s.snapshot().state?.profile).toBe(2);
     expect(s.snapshot().error).toBeNull();
   });
 });
 
-describe("MouseService: controllo continuo della connessione", () => {
-  it("dopo lo scollegamento passa ad 'assente', chiude il vecchio canale e si riconnette al ritorno", async () => {
+describe("MouseService: continuous connection check", () => {
+  it("after unplugging it goes to 'absent', closes the old channel and reconnects on return", async () => {
     const old = new FakeLink();
     let current: FakeLink | null = old;
     const s = make(() => current);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     old.failReads = true;
     current = null;
-    await until(() => s.snapshot().connection === "assente");
+    await until(() => s.snapshot().connection === "absent");
     expect(old.closed).toBe(true);
     expect(s.snapshot().state).toBeNull();
 
     const fresh = new FakeLink();
     fresh.battery = 80;
     current = fresh;
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     expect(s.snapshot().battery).toBe(80);
   });
 
-  it("con il dongle presente ma il mouse muto passa a 'sleep' e poi riprende", async () => {
+  it("with the dongle present but the mouse silent it goes to 'sleep' and then recovers", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     link.failReads = true;
     await until(() => s.snapshot().connection === "sleep");
     link.failReads = false;
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
   });
 
-  it("aggiorna la batteria e il profilo cambiati dal mouse stesso", async () => {
+  it("updates the battery and the profile changed by the mouse itself", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     link.battery = 50;
     link.profile = 2;
     await until(() => s.snapshot().battery === 50 && s.snapshot().state?.profile === 2);
   });
 
-  it("non rinotifica i listener quando nulla e' cambiato", async () => {
+  it("does not notify the listeners again when nothing changed", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
     let n = 0;
     s.onSnapshot(() => n++);
     await new Promise((r) => setTimeout(r, 60));
@@ -359,12 +359,12 @@ describe("MouseService: controllo continuo della connessione", () => {
   });
 });
 
-describe("MouseService: guardia di connessione", () => {
-  it("con lo stato gia' letto ma il mouse in sleep non invia nessuna scrittura", async () => {
+describe("MouseService: connection guard", () => {
+  it("with the state already read but the mouse asleep it sends no write", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
+    await until(() => s.snapshot().connection === "connected");
 
     link.failReadsAfterWrite = true;
     await expect(s.setProfile(1)).rejects.toThrow(/not verified/i);
@@ -379,15 +379,15 @@ describe("MouseService: guardia di connessione", () => {
   });
 });
 
-describe("MouseService: notifiche", () => {
-  it("inoltra gli snapshot ai listener e smette dopo l'annullamento", async () => {
+describe("MouseService: notifications", () => {
+  it("forwards snapshots to the listeners and stops after unsubscribing", async () => {
     const link = new FakeLink();
     const s = make(() => link);
     const seen: string[] = [];
     const off = s.onSnapshot((x) => seen.push(x.connection));
     s.start();
-    await until(() => s.snapshot().connection === "connesso");
-    expect(seen).toContain("connesso");
+    await until(() => s.snapshot().connection === "connected");
+    expect(seen).toContain("connected");
     off();
     const n = seen.length;
     await s.setProfile(1);

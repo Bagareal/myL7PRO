@@ -1,4 +1,4 @@
-// Colore d'accento scelto dall'utente: vive solo nel renderer (localStorage), nessuna scrittura sul mouse.
+// Accent color chosen by the user: lives only in the renderer (localStorage), nothing is written to the mouse.
 export const DEFAULT_ACCENT = "#00e5ff";
 export const PRESET_ACCENTS = ["#00e5ff", "#ff9d2e", "#b6ff3c", "#ff3d71", "#a678ff", "#ffffff"];
 
@@ -7,7 +7,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 export const isAccent = (v: unknown): v is string => typeof v === "string" && HEX.test(v);
 
-/** Nero o bianco, a seconda di quale si legge meglio sopra il colore. */
+/** Black or white, whichever reads better on top of the color. */
 export function onAccent(hex: string): string {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? "#000000" : "#ffffff";
@@ -35,6 +35,6 @@ export function saveAccent(hex: string): void {
   try {
     localStorage.setItem(KEY, hex);
   } catch {
-    /* senza archivio il colore vale solo per questa sessione */
+    /* without storage the color only lasts for this session */
   }
 }

@@ -91,7 +91,7 @@ export function Automation({ snap }: { snap: Snapshot }) {
     }
   }
 
-  if (!view) return <section><h2>Trigger</h2><p className="muted">Loading...</p></section>;
+  if (!view) return <section><h2>Triggers</h2><p className="muted">Loading...</p></section>;
   const { settings, state } = view;
   const api = window.l7.automation;
 
@@ -101,8 +101,8 @@ export function Automation({ snap }: { snap: Snapshot }) {
 
   return (
     <section>
-      <h2>Trigger</h2>
-      {snap.connection === "assente" && (
+      <h2>Triggers</h2>
+      {snap.connection === "absent" && (
         <p>
           <span className="note">Mouse not found</span>{" "}
           <span className="muted">- rules can still be edited and apply when the mouse is back.</span>

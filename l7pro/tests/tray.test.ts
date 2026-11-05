@@ -5,7 +5,7 @@ import { absentSnapshot, connectedSnapshot } from "./snapshots.js";
 const actions = () => ({ open: vi.fn(), setProfile: vi.fn(), quit: vi.fn() });
 
 describe("trayTemplate", () => {
-  it("ha Open, i tre profili e Quit, divisi da separatori", () => {
+  it("has Open, the three profiles and Quit, split by separators", () => {
     const t = trayTemplate(connectedSnapshot(), actions());
     expect(t.map((i) => i.type === "separator" ? "---" : i.label)).toEqual([
       "Open myL7PRO",
@@ -18,13 +18,13 @@ describe("trayTemplate", () => {
     ]);
   });
 
-  it("segna con la spunta solo il profilo attivo", () => {
+  it("puts the checkmark only on the active profile", () => {
     const t = trayTemplate(connectedSnapshot({ state: { ...connectedSnapshot().state!, profile: 1 } }), actions());
     const profiles = t.filter((i) => i.type === "radio");
     expect(profiles.map((p) => p.checked)).toEqual([false, true, false]);
   });
 
-  it("i clic chiamano le azioni giuste", () => {
+  it("clicks call the right actions", () => {
     const a = actions();
     const t = trayTemplate(connectedSnapshot(), a);
     t.find((i) => i.label === "Open myL7PRO")!.click!();
@@ -35,29 +35,29 @@ describe("trayTemplate", () => {
     expect(a.quit).toHaveBeenCalledTimes(1);
   });
 
-  it("senza mouse i profili sono disabilitati ma Open e Quit restano attivi", () => {
+  it("without a mouse the profiles are disabled but Open and Quit stay enabled", () => {
     const t = trayTemplate(absentSnapshot(), actions());
     expect(t.filter((i) => i.type === "radio").every((p) => p.enabled === false)).toBe(true);
     expect(t.find((i) => i.label === "Open myL7PRO")!.enabled).not.toBe(false);
     expect(t.find((i) => i.label === "Quit")!.enabled).not.toBe(false);
   });
 
-  it("usa nomi di riserva se i nomi dei profili non sono ancora noti", () => {
+  it("uses fallback names if the profile names are not known yet", () => {
     const t = trayTemplate(connectedSnapshot({ profileNames: null }), actions());
     expect(t.filter((i) => i.type === "radio").map((p) => p.label)).toEqual(["Profile 1", "Profile 2", "Profile 3"]);
   });
 });
 
 describe("trayTooltip", () => {
-  it("mostra batteria e profilo attivo", () => {
+  it("shows battery and active profile", () => {
     expect(trayTooltip(connectedSnapshot())).toBe("myL7PRO - Battery 93% - Default1");
   });
 
-  it("senza mouse dice che non e' stato trovato", () => {
+  it("without a mouse it says it was not found", () => {
     expect(trayTooltip(absentSnapshot())).toBe("myL7PRO - Mouse not found");
   });
 
-  it("in sleep lo dice", () => {
+  it("says so when asleep", () => {
     expect(trayTooltip(connectedSnapshot({ connection: "sleep" }))).toBe("myL7PRO - Mouse asleep");
   });
 });

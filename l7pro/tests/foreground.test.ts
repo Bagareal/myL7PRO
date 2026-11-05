@@ -5,23 +5,23 @@ const bs = String.fromCharCode(92);
 const win = (path: string, name: string, title: string) => ({ title, owner: { path, name } });
 
 describe("cleanText", () => {
-  it("toglie i caratteri invisibili che alcuni giochi mettono nei titoli", () => {
+  it("removes the invisible characters some games put in titles", () => {
     const messy = "T﻿​​H﻿﻿​﻿​​﻿E ​F​I​​N​ALS";
     expect(cleanText(messy)).toBe("THE FINALS");
   });
 
-  it("toglie gli spazi in eccesso e non lancia errori su valori vuoti", () => {
+  it("removes extra spaces and does not throw on empty values", () => {
     expect(cleanText("  Apex   Legends ")).toBe("Apex Legends");
     expect(cleanText(undefined)).toBe("");
   });
 });
 
 describe("exeFromPath", () => {
-  it("prende il nome del file in minuscolo da un percorso Windows", () => {
+  it("takes the lower-case file name from a Windows path", () => {
     expect(exeFromPath(["D:", "Games", "The Finals", "Discovery.exe"].join(bs))).toBe("discovery.exe");
   });
 
-  it("restituisce null per percorsi vuoti o senza .exe", () => {
+  it("returns null for empty paths or paths without .exe", () => {
     expect(exeFromPath("")).toBeNull();
     expect(exeFromPath(undefined)).toBeNull();
     expect(exeFromPath(["C:", "Windows", "notepad"].join(bs))).toBeNull();
@@ -31,7 +31,7 @@ describe("exeFromPath", () => {
 describe("toOpenApps", () => {
   const p = (...s: string[]) => s.join(bs);
 
-  it("un programma per exe, ordinato per etichetta, con titolo e etichetta puliti", () => {
+  it("one program per exe, sorted by label, with clean title and label", () => {
     const list = toOpenApps(
       [
         win(p("C:", "Brave", "brave.exe"), "Brave", "Tab 1"),
@@ -48,7 +48,7 @@ describe("toOpenApps", () => {
     ]);
   });
 
-  it("scarta le finestre senza percorso e quelle da escludere (l'app stessa)", () => {
+  it("drops windows without a path and the ones to exclude (the app itself)", () => {
     const list = toOpenApps(
       [
         win("", "Sconosciuto", "x"),
@@ -60,7 +60,7 @@ describe("toOpenApps", () => {
     expect(list.map((a) => a.exe)).toEqual(["code.exe"]);
   });
 
-  it("usa il nome del file come etichetta se il nome e' vuoto", () => {
+  it("uses the file name as the label if the name is empty", () => {
     expect(toOpenApps([win(p("C:", "x", "tool.exe"), "", "")], [])[0].label).toBe("tool.exe");
   });
 });

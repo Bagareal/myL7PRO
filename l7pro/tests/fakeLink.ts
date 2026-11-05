@@ -3,7 +3,7 @@ import type { Response } from "../src/core/protocol.js";
 
 const ascii = (s: string) => Array.from(s, (c) => c.charCodeAt(0));
 
-/** Mouse simulato: risponde come il L7 Pro reale (dati logici di PROTOCOL.md sezione 10). */
+/** Simulated mouse: answers like the real L7 Pro (logical data from PROTOCOL.md section 10). */
 export class FakeLink implements HidLink {
   profile = 0;
   usbDpiIndex = 2;
@@ -21,9 +21,9 @@ export class FakeLink implements HidLink {
   rotate = 0;
   keys: Array<{ type: number; value: number[] }> = Array.from({ length: 6 }, () => ({ type: 0, value: [0, 0, 0] }));
 
-  /** Tutte le letture lanciano errore (mouse in sleep). */
+  /** Every read throws (mouse asleep). */
   failReads = false;
-  /** Dopo la prossima scrittura, le letture lanciano errore. */
+  /** After the next write, reads throw. */
   failReadsAfterWrite = false;
   writes: Buffer[] = [];
   closed = false;

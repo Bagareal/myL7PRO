@@ -31,13 +31,13 @@ beforeEach(() => {
 });
 
 describe("makeAutomationApi", () => {
-  it("parte dalle impostazioni di fabbrica e get() restituisce impostazioni e stato", () => {
+  it("starts from the factory settings and get() returns settings and state", () => {
     const v = make().get();
     expect(v.settings).toMatchObject({ defaultSlot: 0, rules: [], autostart: false });
     expect(v.state.hold).toBe(false);
   });
 
-  it("addRule crea un id, mette l'exe in minuscolo, salva e rilegge dopo un riavvio", () => {
+  it("addRule creates an id, lower-cases the exe, saves and reads back after a restart", () => {
     const api = make();
     api.addRule({ exe: "R5Apex.EXE", label: "Apex", slot: 2 });
     const [r] = api.settings().rules;
@@ -46,7 +46,7 @@ describe("makeAutomationApi", () => {
     expect(make().settings().rules).toEqual([r]);
   });
 
-  it("addRule accetta un percorso e tiene solo il nome del file", () => {
+  it("addRule accepts a path and keeps only the file name", () => {
     const api = make();
     api.addRule({ exe: ["C:", "Games", "Discovery.exe"].join(String.fromCharCode(92)), label: "", slot: 1 });
     expect(api.settings().rules[0]).toMatchObject({ exe: "discovery.exe", label: "discovery.exe" });
@@ -58,19 +58,19 @@ describe("makeAutomationApi", () => {
     [{ exe: "a.exe", label: "x", slot: 3 }],
     [{ exe: "a.exe", label: "x", slot: -1 }],
     [{ exe: "a.exe", label: "x", slot: 1.5 }],
-  ])("addRule rifiuta %j", (input) => {
+  ])("addRule rejects %j", (input) => {
     const api = make();
     expect(() => api.addRule(input)).toThrow();
     expect(api.settings().rules).toHaveLength(0);
   });
 
-  it("addRule rifiuta un programma gia' presente (senza badare alle maiuscole)", () => {
+  it("addRule rejects a program that is already there (case-insensitive)", () => {
     const api = make();
     api.addRule({ exe: "a.exe", label: "A", slot: 0 });
     expect(() => api.addRule({ exe: "A.EXE", label: "A2", slot: 1 })).toThrow(/already/i);
   });
 
-  it("removeRule, setRuleSlot e moveRule salvano e rifiutano id sconosciuti o slot non validi", () => {
+  it("removeRule, setRuleSlot and moveRule save and reject unknown ids or invalid slots", () => {
     const api = make();
     api.addRule({ exe: "a.exe", label: "A", slot: 0 });
     api.addRule({ exe: "b.exe", label: "B", slot: 0 });
@@ -94,7 +94,7 @@ describe("makeAutomationApi", () => {
     expect(make().settings().rules.map((r) => r.exe)).toEqual(["a.exe", "b.exe"]);
   });
 
-  it("setDefaultSlot rifiuta slot non validi e salva quelli buoni", () => {
+  it("setDefaultSlot rejects invalid slots and saves good ones", () => {
     const api = make();
     api.setDefaultSlot(2);
     expect(make().settings().defaultSlot).toBe(2);
@@ -102,7 +102,7 @@ describe("makeAutomationApi", () => {
     expect(() => api.setDefaultSlot(NaN)).toThrow();
   });
 
-  it("setAutostart salva e applica la scelta al sistema; rifiuta valori non booleani", () => {
+  it("setAutostart saves and applies the choice to the system; rejects non-boolean values", () => {
     const api = make();
     api.setAutostart(true);
     expect(autostartCalls).toEqual([true]);
@@ -110,7 +110,7 @@ describe("makeAutomationApi", () => {
     expect(() => api.setAutostart("si" as unknown as boolean)).toThrow();
   });
 
-  it("ogni modifica riapplica le regole e notifica l'interfaccia, un rifiuto no", () => {
+  it("every change re-applies the rules and notifies the interface, a rejection does not", () => {
     const api = make();
     api.addRule({ exe: "a.exe", label: "A", slot: 0 });
     api.setDefaultSlot(1);

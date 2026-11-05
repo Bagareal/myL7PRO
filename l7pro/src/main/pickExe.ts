@@ -1,7 +1,7 @@
 import { dialog, type BrowserWindow } from "electron";
 import { exeFromPath } from "./foreground.js";
 
-/** Finestra di Windows per scegliere un file .exe. Restituisce il nome del file e un'etichetta, o null se annulla. */
+/** Windows dialog to choose an .exe file. Returns the file name and a label, or null if cancelled. */
 export async function pickExe(parent: BrowserWindow | null): Promise<{ exe: string; label: string } | null> {
   const options = { properties: ["openFile" as const], filters: [{ name: "Programs", extensions: ["exe"] }] };
   const res = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options);

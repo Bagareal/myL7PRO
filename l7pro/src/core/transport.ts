@@ -21,7 +21,7 @@ export interface FoundDevice {
   product?: string;
 }
 
-/** Elenca le interfacce di configurazione (usage page 0xFF01) dei dongle noti. */
+/** Lists the configuration interfaces (usage page 0xFF01) of the known dongles. */
 export function findDevices(): FoundDevice[] {
   return HID.devices()
     .filter(
@@ -35,7 +35,7 @@ export function findDevices(): FoundDevice[] {
     .map((d) => ({ path: d.path as string, productId: d.productId, product: d.product }));
 }
 
-/** Canale di comunicazione con il mouse: implementato da Transport (HID reale) e da un finto nei test. */
+/** Communication channel with the mouse: implemented by Transport (real HID) and by a fake in tests. */
 export interface HidLink {
   read(
     reportId: number,
@@ -54,13 +54,13 @@ export class Transport implements HidLink {
 
   private constructor(private dev: HID.HID) {
     dev.on("data", (buf: Buffer) => {
-      // Su Windows il buffer puo' iniziare con il report ID: lo togliamo se riconosciuto.
+      // On Windows the buffer may start with the report ID: we strip it when recognized.
       const body = [REPORT_CONFIRM, REPORT_SHORT, REPORT_LONG].includes(buf[0]) ? buf.subarray(1) : buf;
       const logical = unxor(body);
       for (const l of [...this.listeners]) l(logical);
     });
     dev.on("error", () => {
-      /* mouse scollegato o in sleep: gestito dalle richieste con timeout */
+      /* mouse unplugged or asleep: handled by the requests with a timeout */
     });
   }
 
@@ -72,7 +72,7 @@ export class Transport implements HidLink {
     this.dev.close();
   }
 
-  /** Ascolta gli input report (dati logici, gia' invertiti). Restituisce la funzione per smettere. */
+  /** Listens to input reports (logical data, already inverted). Returns the function that stops listening. */
   onInput(fn: (logical: number[]) => void): () => void {
     this.listeners.push(fn);
     return () => {
@@ -80,7 +80,7 @@ export class Transport implements HidLink {
     };
   }
 
-  /** Serializza le operazioni: uno comando alla volta. */
+  /** Serializes operations: one command at a time. */
   private enqueue<T>(job: () => Promise<T>): Promise<T> {
     const run = this.queue.then(job, job);
     this.queue = run.catch(() => undefined);
@@ -103,7 +103,7 @@ export class Transport implements HidLink {
     });
   }
 
-  /** Invia una richiesta gia' codificata e attende la conferma (best effort). */
+  /** Sends an already encoded request and waits for the confirmation (best effort). */
   send(request: Buffer): Promise<boolean> {
     return this.enqueue(async () => {
       const cmd = request[1] ^ 0xff;
@@ -113,7 +113,7 @@ export class Transport implements HidLink {
     });
   }
 
-  /** Invia una richiesta di lettura e restituisce la risposta, con qualche tentativo. */
+  /** Sends a read request and returns the answer, with a few retries. */
   read(
     reportId: number,
     cmd: number,

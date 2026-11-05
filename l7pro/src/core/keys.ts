@@ -1,6 +1,6 @@
 import { BUTTON_COUNT, type KeyAction } from "./protocol.js";
 
-/** Tasti del L7 Pro con l'indice usato dal mouse (PROTOCOL.md 10.19). */
+/** L7 Pro buttons with the index the mouse uses (PROTOCOL.md 10.19). */
 export const BUTTONS = [
   { index: 0, name: "Left button" },
   { index: 1, name: "Middle button" },
@@ -9,7 +9,7 @@ export const BUTTONS = [
   { index: 4, name: "Back" },
 ] as const;
 
-/** Tasti che, assegnati male, rendono il mouse difficile da usare: chiedono conferma. */
+/** Buttons that make the mouse hard to use if assigned badly: they ask for confirmation. */
 export const RISKY_BUTTONS: readonly number[] = [0, 1, 2];
 
 export type KeyGroup = "Mouse" | "DPI" | "Edit" | "Multimedia" | "Other";
@@ -28,7 +28,7 @@ const fn = (id: string, label: string, group: KeyGroup, type: number, value: [nu
   action: { type, value },
 });
 
-/** Solo funzioni catturate con M HUB (PROTOCOL.md 10.19): niente DPI -, cambio profilo, Shortcut, macro. */
+/** Only functions captured with M HUB (PROTOCOL.md 10.19): no DPI -, profile switch, Shortcut or macros. */
 export const FUNCTIONS: readonly KeyFunction[] = [
   fn("left", "Left button", "Mouse", 1, [0x01, 0, 0]),
   fn("right", "Right button", "Mouse", 1, [0x02, 0, 0]),
@@ -62,7 +62,7 @@ export const DEFAULT_ACTION: KeyAction = { type: 0, value: [0, 0, 0] };
 
 export const isDefaultAction = (a: KeyAction) => a.type === 0;
 
-// ---------- Tastiera ----------
+// ---------- Keyboard ----------
 
 export const MODIFIERS = [
   { name: "Ctrl", bit: 0x01 },
@@ -71,7 +71,7 @@ export const MODIFIERS = [
   { name: "Win", bit: 0x08 },
 ] as const;
 
-/** Usage HID della pagina tastiera. */
+/** HID usage on the keyboard page. */
 export const KEYBOARD_KEYS: ReadonlyArray<{ label: string; usage: number }> = [
   ...Array.from({ length: 26 }, (_, i) => ({ label: String.fromCharCode(65 + i), usage: 0x04 + i })),
   ...[..."1234567890"].map((c, i) => ({ label: c, usage: 0x1e + i })),
@@ -87,12 +87,12 @@ export const KEYBOARD_KEYS: ReadonlyArray<{ label: string; usage: number }> = [
   { label: "Up arrow", usage: 0x52 },
 ];
 
-/** Tasto della tastiera con la maschera dei modificatori (Ctrl 1, Shift 2, Alt 4, Win 8). */
+/** Keyboard key with the modifier mask (Ctrl 1, Shift 2, Alt 4, Win 8). */
 export function keyboardAction(usage: number, modifiers: number): KeyAction {
   return { type: 2, value: [modifiers & 0x0f, usage, 0] };
 }
 
-// ---------- Descrizione ----------
+// ---------- Description ----------
 
 export function describeAction(a: KeyAction, button: number): string {
   if (a.type === 0) return `Default (${BUTTONS[button]?.name ?? `button ${button}`})`;
@@ -105,12 +105,12 @@ export function describeAction(a: KeyAction, button: number): string {
   return known ? known.label : `Other (type ${a.type})`;
 }
 
-// ---------- Protezione del click sinistro ----------
+// ---------- Left click protection ----------
 
 const isLeftClick = (a: KeyAction, button: number) =>
   (a.type === 0 && button === 0) || (a.type === 1 && a.value[0] === 0x01 && a.value[1] === 0 && a.value[2] === 0);
 
-/** Vero se, dopo aver assegnato `next` al tasto `button`, almeno un tasto fa ancora il click sinistro. */
+/** True if, after assigning `next` to `button`, at least one button still does the left click. */
 export function keepsLeftClick(keys: KeyAction[], button: number, next: KeyAction): boolean {
   for (let i = 0; i < BUTTON_COUNT; i++) {
     const a = i === button ? next : keys[i];

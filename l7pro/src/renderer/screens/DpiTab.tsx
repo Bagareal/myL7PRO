@@ -6,18 +6,18 @@ import { cleanError } from "../errors.js";
 
 export function DpiTab({ snap }: { snap: Snapshot }) {
   const state = snap.state;
-  const connected = snap.connection === "connesso" && state !== null;
+  const connected = snap.connection === "connected" && state !== null;
   const current = state?.dpi ?? [];
   const currentKey = current.join(",");
   const inUse = state?.activeLevels ?? 0;
-  // Livello attivo del collegamento wireless (il dongle); il mouse lo riporta in ogni lettura dello stato.
+  // Active level of the wireless link (the dongle); the mouse reports it in every state read.
   const active = state?.wirelessDpiIndex ?? -1;
 
   const [values, setValues] = useState<number[]>(() => [...current]);
   const [error, setError] = useState<string | null>(null);
 
-  // Quando il mouse riporta valori diversi (dopo una scrittura o un cambio profilo) la modifica in corso si riallinea.
-  // Non al primo disegno (i valori sono gia' quelli giusti): un effetto in ritardo cancellerebbe uno slider appena mosso.
+  // When the mouse reports different values (after a write or a profile change) the edit in progress realigns.
+  // Not on first render (the values are already right): a late effect would cancel a slider that was just moved.
   const shownKey = useRef(currentKey);
   useEffect(() => {
     if (shownKey.current === currentKey) return;

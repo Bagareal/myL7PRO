@@ -3,7 +3,7 @@ import type { Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 
-// La CSP stretta vale solo per la build finale: in sviluppo Vite inietta script inline e un WebSocket.
+// The strict CSP only applies to the final build: in development Vite injects inline scripts and a WebSocket.
 const cspSoloBuild: Plugin = {
   name: "csp-solo-build",
   apply: "build",
@@ -24,7 +24,7 @@ export default defineConfig({
     build: { rollupOptions: { input: { index: "src/main/index.ts" } } },
   },
   preload: {
-    // Il preload con sandbox attivo deve essere CommonJS.
+    // A preload running with the sandbox on must be CommonJS.
     build: {
       rollupOptions: {
         input: { index: "src/preload/index.ts" },

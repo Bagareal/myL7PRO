@@ -10,16 +10,16 @@ afterEach(cleanup);
 const openProfile = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 const nav = () => screen.getByRole("navigation");
 
-describe("Barra: profili", () => {
-  it("ha i tre profili, Trigger e Settings, e non le vecchie voci", async () => {
+describe("Bar: profiles", () => {
+  it("has the three profiles, Triggers and Settings, and not the old entries", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
     const labels = Array.from(nav().querySelectorAll("button")).map((b) => b.textContent);
-    expect(labels).toEqual(["Default1", "TheFinals", "Default3", "Trigger", "Settings"]);
+    expect(labels).toEqual(["Default1", "TheFinals", "Default3", "Triggers", "Settings"]);
   });
 
-  it("il pallino 'Active on mouse' sta sul profilo attivo e si sposta con lo snapshot", async () => {
+  it("the 'Active on mouse' dot sits on the active profile and moves with the snapshot", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -34,20 +34,20 @@ describe("Barra: profili", () => {
     expect(dots()[0].parentElement!.textContent).toBe("TheFinals");
   });
 
-  it("aprire una voce la segna aria-current e non scrive niente sul mouse", async () => {
+  it("opening an entry marks it aria-current and writes nothing to the mouse", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
     openProfile("TheFinals");
     expect(screen.getByRole("button", { name: "TheFinals" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("button", { name: "Default1" }).getAttribute("aria-current")).toBeNull();
-    openProfile("Trigger");
+    openProfile("Triggers");
     openProfile("Settings");
     openProfile("Default3");
     expect(api.calls).toEqual([]);
   });
 
-  it("senza mouse mostra Profile 1, Profile 2, Profile 3", async () => {
+  it("without a mouse it shows Profile 1, Profile 2, Profile 3", async () => {
     installFakeApi(absentSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -56,8 +56,8 @@ describe("Barra: profili", () => {
   });
 });
 
-describe("Pagina profilo attivo", () => {
-  it("parte dal profilo attivo: titolo, etichetta, schede e livelli DPI con il polling", async () => {
+describe("Active profile page", () => {
+  it("starts on the active profile: title, badge, tabs and DPI levels with the polling", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     expect((await screen.findByRole("heading", { level: 2 })).textContent).toBe("Default1");
@@ -68,7 +68,7 @@ describe("Pagina profilo attivo", () => {
     expect(screen.queryByRole("button", { name: "Switch" })).toBeNull();
   });
 
-  it("Macros dice 'Not available yet'", async () => {
+  it("Macros says 'Not available yet'", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     fireEvent.click(await screen.findByRole("tab", { name: "Macros" }));
@@ -76,8 +76,8 @@ describe("Pagina profilo attivo", () => {
   });
 });
 
-describe("Pagina profilo non attivo", () => {
-  it("mostra la fascia con Switch e NON i valori del profilo sbagliato", async () => {
+describe("Inactive profile page", () => {
+  it("shows the band with Switch and NOT the values of the wrong profile", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -91,7 +91,7 @@ describe("Pagina profilo non attivo", () => {
     expect(api.calls).toEqual([]);
   });
 
-  it("Switch chiama setProfile(slot) una volta, senza dialogo", async () => {
+  it("Switch calls setProfile(slot) once, without a dialog", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -101,7 +101,7 @@ describe("Pagina profilo non attivo", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("Switch che rifiuta mostra l'errore e la fascia resta", async () => {
+  it("a rejecting Switch shows the error and the band stays", async () => {
     installFakeApi(connectedSnapshot());
     window.l7.setProfile = async () => {
       throw new Error("Write sent but not verified: timeout");
@@ -114,7 +114,7 @@ describe("Pagina profilo non attivo", () => {
     expect(screen.getByRole("button", { name: "Switch" })).toBeTruthy();
   });
 
-  it("se il mouse passa da solo al profilo aperto la fascia sparisce e compaiono i valori", async () => {
+  it("if the mouse switches by itself to the open profile the band disappears and the values appear", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -127,7 +127,7 @@ describe("Pagina profilo non attivo", () => {
     expect(screen.getByText("1229")).toBeTruthy();
   });
 
-  it("se il mouse lascia il profilo aperto compare la fascia e i valori spariscono", async () => {
+  it("if the mouse leaves the open profile the band appears and the values disappear", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByText("1229");
@@ -140,8 +140,8 @@ describe("Pagina profilo non attivo", () => {
   });
 });
 
-describe("Pagina iniziale", () => {
-  it("finche' non scelgo niente la pagina segue il profilo attivo del mouse", async () => {
+describe("Start page", () => {
+  it("until nothing is chosen the page follows the mouse's active profile", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByText("1229");
@@ -153,8 +153,8 @@ describe("Pagina iniziale", () => {
   });
 });
 
-describe("Pagina profilo senza mouse", () => {
-  it("niente Switch ne' controlli, solo il messaggio", async () => {
+describe("Profile page without a mouse", () => {
+  it("no Switch and no controls, only the message", async () => {
     installFakeApi(absentSnapshot());
     render(<App />);
     expect(await screen.findByText("Mouse not connected")).toBeTruthy();
@@ -165,7 +165,7 @@ describe("Pagina profilo senza mouse", () => {
 });
 
 describe("Rename", () => {
-  it("Invio salva subito il nome del profilo aperto, senza dialogo", async () => {
+  it("Enter saves the name of the open profile right away, without a dialog", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByRole("navigation");
@@ -182,7 +182,7 @@ describe("Rename", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("Esc annulla senza inviare niente", async () => {
+  it("Esc cancels without sending anything", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Rename" }));
@@ -193,7 +193,7 @@ describe("Rename", () => {
     expect(api.calls).toEqual([]);
   });
 
-  it("se il mouse rifiuta il nome mostra l'errore e resta in modifica", async () => {
+  it("if the mouse rejects the name it shows the error and stays in edit mode", async () => {
     installFakeApi(connectedSnapshot());
     window.l7.renameProfile = async () => {
       throw new Error("The name can only contain letters");
@@ -207,7 +207,7 @@ describe("Rename", () => {
     expect(screen.getByRole("textbox", { name: "Profile name" })).toBeTruthy();
   });
 
-  it("cambiando pagina la modifica in corso si annulla", async () => {
+  it("changing page cancels the edit in progress", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Rename" }));

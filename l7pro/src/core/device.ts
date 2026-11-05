@@ -21,7 +21,7 @@ import {
 } from "./protocol.js";
 import { Transport, findDevices, type HidLink } from "./transport.js";
 
-/** Scarta le risposte vuote o incomplete (arrivano quando il mouse non ha ancora pronto il dato). */
+/** Discards empty or incomplete answers (they arrive when the mouse has not got the data ready yet). */
 function isPlausibleState(d: number[]): boolean {
   const s = parseProfileState(d);
   return (
@@ -61,7 +61,7 @@ export class L7Pro {
     return parseReceiverInfo((await this.transport.read(REPORT_SHORT, 0x03, [], (d) => parseReceiverInfo(d).vid === VENDOR_ID)).data);
   }
 
-  /** Lettura 0x11 0x06 (batteria). Restituisce anche i dati grezzi per la verifica. */
+  /** Reads 0x11 0x06 (battery). Also returns the raw data for verification. */
   async status(): Promise<{ status: DeviceStatus; raw: number[] }> {
     const { data } = await this.transport.read(REPORT_SHORT, 0x06, [], (d) => parseDeviceStatus(d).vid === VENDOR_ID);
     return { status: parseDeviceStatus(data), raw: data.slice(0, 12) };
@@ -84,7 +84,7 @@ export class L7Pro {
     return POLLING_RATES[this.productId] ?? POLLING_RATES[0x1020];
   }
 
-  /** Con il dongle il mouse e' wireless se connect == 1. */
+  /** With the dongle the mouse is wireless when connect == 1. */
   async isWireless(): Promise<boolean> {
     return (await this.receiverInfo()).connect === 1;
   }

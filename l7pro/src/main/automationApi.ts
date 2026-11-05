@@ -7,9 +7,9 @@ import type { AutomationView } from "../shared/api.js";
 
 interface Deps {
   store: SettingsStore;
-  /** Registra o toglie l'avvio automatico con Windows. */
+  /** Registers or removes starting with Windows. */
   applyAutostart: (on: boolean) => void;
-  /** Chiamata dopo ogni modifica riuscita (per aggiornare l'interfaccia). */
+  /** Called after every successful change (to refresh the interface). */
   onChange: () => void;
 }
 
@@ -20,7 +20,7 @@ interface AutomationLike {
 
 const validSlot = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) < PROFILE_COUNT;
 
-/** Modifica le impostazioni dell'automazione: valida ogni argomento, salva su file e riapplica le regole. */
+/** Changes the automation settings: validates every argument, saves to file and applies the rules again. */
 export function makeAutomationApi(deps: Deps) {
   let settings: Settings = deps.store.load();
   let automation: AutomationLike | null = null;

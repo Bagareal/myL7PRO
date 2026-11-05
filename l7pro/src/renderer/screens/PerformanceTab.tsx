@@ -7,9 +7,9 @@ import { cleanError } from "../errors.js";
 const HEAVY_RATES = [4000, 8000];
 
 const CLICK_DELAY_MS = 400;
-const SWEEP = 4; // gradi del quadrante per ogni grado di rotazione
+const SWEEP = 4; // dial degrees per degree of rotation
 
-/** Quadrante: il punto scorre sull'arco, il mouse ruota dell'angolo vero. */
+/** Dial: the dot slides along the arc, the mouse rotates by the real angle. */
 function Dial({ angle }: { angle: number }) {
   const c = { x: 110, y: 110 };
   const at = (deg: number, r: number) => {
@@ -55,14 +55,14 @@ function Switch({ label, text, checked, onChange }: { label: string; text: strin
   );
 }
 
-/** Valore mostrato subito al clic; si riallinea al mouse quando arriva il nuovo stato (o se la scrittura fallisce). */
+/** Value shown right at the click; it realigns to the mouse when the new state arrives (or if the write fails). */
 function useLocal<T>(fromMouse: T): [T, (v: T) => void] {
   const [value, setValue] = useState(fromMouse);
   useEffect(() => setValue(fromMouse), [fromMouse]);
   return [value, setValue];
 }
 
-/** Scheda Performance del profilo attivo, con il layout di M HUB (PROTOCOL.md 10.14-10.18). */
+/** Performance tab of the active profile, with the M HUB layout (PROTOCOL.md 10.14-10.18). */
 export function PerformanceTab({ snap }: { snap: Snapshot }) {
   const state = snap.state;
   const [error, setError] = useState<string | null>(null);

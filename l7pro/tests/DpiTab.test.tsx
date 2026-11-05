@@ -17,8 +17,8 @@ const slider = (n: number) => screen.getByRole("slider", { name: `Level ${n}` })
 const applyDpi = () => screen.getByRole("button", { name: "Apply DPI" }) as HTMLButtonElement;
 const move = (n: number, pos: number) => fireEvent.change(slider(n), { target: { value: String(pos) } });
 
-describe("DPI tab: livelli", () => {
-  it("mostra solo gli slider dei livelli attivi, con il valore attuale", async () => {
+describe("DPI tab: levels", () => {
+  it("shows only the sliders of the levels in use, with the current value", async () => {
     await open();
     expect(screen.getAllByRole("slider")).toHaveLength(3);
     expect([0, 1, 2].map((n) => slider(n).value)).toEqual([400, 800, 1229].map((d) => String(dpiToSlider(d))));
@@ -30,7 +30,7 @@ describe("DPI tab: livelli", () => {
     expect(applyDpi().disabled).toBe(true);
   });
 
-  it("il livello attivo del mouse e' evidenziato e gli altri no", async () => {
+  it("the mouse's active level is highlighted and the others are not", async () => {
     await open();
     const rows = [0, 1, 2].map((n) => slider(n).closest("label")!);
     expect(rows.map((r) => r.getAttribute("aria-current"))).toEqual([null, null, "true"]);
@@ -38,7 +38,7 @@ describe("DPI tab: livelli", () => {
     expect(rows[0].textContent).not.toContain("Active");
   });
 
-  it("sotto gli slider ci sono i segni delle tacche, una per valore", async () => {
+  it("under the sliders there are tick marks, one per value", async () => {
     await open();
     const listId = slider(2).getAttribute("list");
     expect(listId).toBeTruthy();
@@ -49,13 +49,13 @@ describe("DPI tab: livelli", () => {
     );
   });
 
-  it("muovendo lo slider il numero accanto si aggiorna", async () => {
+  it("moving the slider updates the number next to it", async () => {
     await open();
     move(2, 6);
     expect(screen.getByText(String(sliderToDpi(6)))).toBeTruthy();
   });
 
-  it("dopo una modifica Apply DPI scrive subito, senza dialogo di conferma", async () => {
+  it("after a change Apply DPI writes right away, without a confirmation dialog", async () => {
     const api = await open();
     move(2, 6);
     expect(applyDpi().disabled).toBe(false);
@@ -64,7 +64,7 @@ describe("DPI tab: livelli", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("piu' livelli modificati partono in ordine, uno per scrittura", async () => {
+  it("several changed levels go out in order, one per write", async () => {
     const api = await open();
     move(0, 9);
     move(2, 6);
@@ -77,7 +77,7 @@ describe("DPI tab: livelli", () => {
     );
   });
 
-  it("un errore di scrittura viene mostrato", async () => {
+  it("a write error is shown", async () => {
     await open();
     window.l7.setDpiLevel = async () => {
       throw new Error("Mouse not connected");
@@ -89,32 +89,32 @@ describe("DPI tab: livelli", () => {
   });
 });
 
-describe("DPI tab: numero di livelli", () => {
+describe("DPI tab: number of levels", () => {
   const add = () => screen.getByRole("button", { name: "Add level" }) as HTMLButtonElement;
   const remove = (n: number) => screen.getByRole("button", { name: `Remove level ${n}` }) as HTMLButtonElement;
 
-  it("Add level aggiunge subito un livello, senza dialogo", async () => {
+  it("Add level adds a level right away, without a dialog", async () => {
     const api = await open();
     fireEvent.click(add());
     await waitFor(() => expect(api.calls).toEqual([["setLevelCount", 4]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("Restore defaults ripristina subito i DPI di fabbrica, senza dialogo", async () => {
+  it("Restore defaults restores the factory DPI right away, without a dialog", async () => {
     const api = await open();
     fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
     await waitFor(() => expect(api.calls).toEqual([["restoreDpiDefaults"]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("senza mouse non c'e' il pulsante Restore defaults", async () => {
+  it("without a mouse the Restore defaults button is not there", async () => {
     installFakeApi(absentSnapshot());
     render(<App />);
     expect(await screen.findByText("Mouse not connected")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Restore defaults" })).toBeNull();
   });
 
-  it("ogni slider ha il suo pulsante e toglie proprio quel livello, subito", async () => {
+  it("every slider has its own button and removes exactly that level, right away", async () => {
     const api = await open();
     expect([0, 1, 2].map((n) => remove(n).disabled)).toEqual([false, false, false]);
     fireEvent.click(remove(1));
@@ -122,7 +122,7 @@ describe("DPI tab: numero di livelli", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("i limiti sono 1 e 6 livelli", async () => {
+  it("the limits are 1 and 6 levels", async () => {
     const one = connectedSnapshot();
     one.state = { ...one.state!, activeLevels: 1 };
     await open(one);

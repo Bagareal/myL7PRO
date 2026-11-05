@@ -1,27 +1,27 @@
-// Codifica e decodifica del protocollo 0x11/0x12 (vedi PROTOCOL.md, sezioni 3 e 10).
-// Solo comandi verificati sul mouse reale.
+// Encoding and decoding of the 0x11/0x12 protocol (see PROTOCOL.md, sections 3 and 10).
+// Only commands verified on the real mouse.
 
 export const VENDOR_ID = 0x5253;
 export const PRODUCT_IDS = [0x1020, 0x1021];
 export const CONFIG_USAGE_PAGE = 0xff01;
 export const CONFIG_USAGE = 1;
 
-export const REPORT_SHORT = 0x11; // payload 20 byte
-export const REPORT_LONG = 0x12; // payload 64 byte
-export const REPORT_CONFIRM = 0x13; // input report di conferma
+export const REPORT_SHORT = 0x11; // 20-byte payload
+export const REPORT_LONG = 0x12; // 64-byte payload
+export const REPORT_CONFIRM = 0x13; // confirmation input report
 
 const PAYLOAD_LEN: Record<number, number> = { [REPORT_SHORT]: 20, [REPORT_LONG]: 64 };
 
 export const DPI_MIN = 200;
 export const DPI_MAX = 26000;
 export const DPI_LEVELS = 6;
-/** Valori di Restore defaults di M HUB (catturati dall utente il 2026-11-05). */
+/** M HUB Restore defaults values (captured by the user on 2026-11-05). */
 export const DPI_FACTORY = [400, 800, 1600, 3200, 6400, 26000];
 export const PROFILE_COUNT = 3;
 export const KEY_SLOTS = 6;
-/** Tasti del L7 Pro: 0 sinistro, 1 centrale, 2 destro, 3 Advance, 4 Back. */
+/** L7 Pro buttons: 0 left, 1 middle, 2 right, 3 Advance, 4 Back. */
 export const BUTTON_COUNT = 5;
-/** Tipi catturati con M HUB: 0 predefinita, 1 mouse, 2 tastiera, 3 multimediale, 5 DPI, 8 scorciatoia, 9 disabilitato. */
+/** Types captured with M HUB: 0 default, 1 mouse, 2 keyboard, 3 multimedia, 5 DPI, 8 shortcut, 9 disabled. */
 const KEY_TYPES = [0, 1, 2, 3, 5, 8, 9];
 
 export const POLLING_RATES: Record<number, number[]> = {
@@ -29,7 +29,7 @@ export const POLLING_RATES: Record<number, number[]> = {
   0x1021: [125, 500, 1000],
 };
 
-/** Costruisce il buffer da passare a sendFeatureReport (report ID in testa, byte invertiti). */
+/** Builds the buffer to pass to sendFeatureReport (report ID first, inverted bytes). */
 export function encodeRequest(reportId: number, cmd: number, args: number[] = []): Buffer {
   const len = PAYLOAD_LEN[reportId];
   if (len === undefined) throw new Error(`Unsupported report ID: 0x${reportId.toString(16)}`);
@@ -43,22 +43,22 @@ export function encodeRequest(reportId: number, cmd: number, args: number[] = []
   return out;
 }
 
-/** Inverte i byte (XOR 0xFF). */
+/** Inverts the bytes (XOR 0xFF). */
 export function unxor(buf: Uint8Array): number[] {
   return Array.from(buf, (b) => b ^ 0xff);
 }
 
 export interface Response {
   cmd: number;
-  data: number[]; // dati logici, a partire dall'indice 2 della risposta grezza
+  data: number[]; // logical data, starting at index 2 of the raw answer
 }
 
-/** Decodifica un feature report letto: indice 0 = report ID, 1 = comando invertito, 2.. = dati invertiti. */
+/** Decodes a feature report that was read: index 0 = report ID, 1 = inverted command, 2.. = inverted data. */
 export function decodeResponse(raw: Buffer): Response {
   return { cmd: raw[1] ^ 0xff, data: unxor(raw.subarray(2)) };
 }
 
-// ---------- Stato profilo (0x12 0x67) ----------
+// ---------- Profile state (0x12 0x67) ----------
 
 export interface ProfileState {
   profile: number;
@@ -67,19 +67,19 @@ export interface ProfileState {
   wirelessDpiIndex: number;
   wirelessRateIndex: number;
   reserved: number;
-  dpi: number[]; // 6 livelli, asse X
-  dpiY: number[]; // 6 livelli, asse Y
+  dpi: number[]; // 6 levels, X axis
+  dpiY: number[]; // 6 levels, Y axis
   activeLevels: number;
   sensor: number;
   debounce: number;
   sleep: number;
-  /** Angolo del sensore in gradi, con segno (byte 49). */
+  /** Sensor angle in degrees, signed (byte 49). */
   rotate: number;
-  /** Sei tasti (byte 20-43); il L7 Pro ne usa cinque. */
+  /** Six buttons (bytes 20-43); the L7 Pro uses five. */
   keys: KeyAction[];
 }
 
-/** Funzione di un tasto: tipo (0 = predefinita) e tre byte di valore (PROTOCOL.md 5.7 e 10.19). */
+/** Function of a button: type (0 = default) and three value bytes (PROTOCOL.md 5.7 and 10.19). */
 export interface KeyAction {
   type: number;
   value: [number, number, number];
@@ -117,7 +117,7 @@ export interface SensorSettings {
   mode: "Performance" | "Gaming" | "Extreme";
 }
 
-/** Byte sensore di 0x67 (PROTOCOL.md 4.1.1): bit 0-1 LOD, 2 ripple, 3 angle snapping, 4 motion sync, 6-7 modalita'. */
+/** Sensor byte of 0x67 (PROTOCOL.md 4.1.1): bits 0-1 LOD, 2 ripple, 3 angle snapping, 4 motion sync, 6-7 mode. */
 export function parseSensor(byte: number): SensorSettings {
   const lod = byte & 0x03;
   const mode = (byte & 0x80) === 0 ? "Performance" : (byte & 0x40) === 0 ? "Gaming" : "Extreme";
@@ -130,7 +130,7 @@ export function parseSensor(byte: number): SensorSettings {
   };
 }
 
-/** Le modalita' Performance/Gaming/Extreme esistono dal firmware 5.12.4.4 del mouse. */
+/** The Performance/Gaming/Extreme modes exist from mouse firmware 5.12.4.4. */
 export function supportsGameMode(firmware: string): boolean {
   const parts = firmware.split(".").map(Number);
   if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n))) return false;
@@ -162,7 +162,7 @@ export interface DeviceStatus {
   charge: number;
 }
 
-/** 0x11 0x06: vid, pid, firmware (u32), byte modo/stato, batteria, carica. Struttura da codice, non ancora verificata. */
+/** 0x11 0x06: vid, pid, firmware (u32), mode/status byte, battery, charge. Layout from code, not fully verified yet. */
 export function parseDeviceStatus(d: number[]): DeviceStatus {
   return {
     vid: u16(d, 0),
@@ -174,12 +174,12 @@ export function parseDeviceStatus(d: number[]): DeviceStatus {
   };
 }
 
-/** Versione: lunghezza uint8 poi stringa ASCII. */
+/** Version: uint8 length, then an ASCII string. */
 export function parseVersion(d: number[]): string {
   return String.fromCharCode(...d.slice(1, 1 + d[0]));
 }
 
-/** Nome profilo: un byte di intestazione, poi UTF-8 con zeri finali. Formato "nome$sorgente$id". */
+/** Profile name: one header byte, then UTF-8 with trailing zeros. Format "name$source$id". */
 export function parseProfileName(d: number[]): string {
   const bytes = d.slice(1);
   const end = bytes.indexOf(0);
@@ -187,9 +187,9 @@ export function parseProfileName(d: number[]): string {
   return text.split("$")[0];
 }
 
-// ---------- Scritture verificate ----------
+// ---------- Verified writes ----------
 
-/** 0x11 0x58 PP: cambio profilo onboard. */
+/** 0x11 0x58 PP: onboard profile switch. */
 export function buildProfileSwitch(profile: number): Buffer {
   if (!Number.isInteger(profile) || profile < 0 || profile >= PROFILE_COUNT) {
     throw new Error(`Invalid profile: ${profile} (allowed 0..${PROFILE_COUNT - 1})`);
@@ -200,9 +200,9 @@ export function buildProfileSwitch(profile: number): Buffer {
 export const PROFILE_NAME_MAX = 16;
 
 /**
- * 0x12 0x59 SLOT NOME: rinomina un profilo onboard (PROTOCOL.md 10.13). Il nome e' ASCII in chiaro, senza
- * lunghezza e senza "$sorgente$id"; il riempimento 0xFF funge da terminatore. Verificato con nomi di 8 e 9 caratteri:
- * il limite di 16 e il solo ASCII stampabile sono una scelta prudente, non il limite di M HUB.
+ * 0x12 0x59 SLOT NAME: renames an onboard profile (PROTOCOL.md 10.13). The name is plain ASCII, without
+ * a length and without "$source$id"; the 0xFF padding acts as terminator. Verified with names of 8 and 9 characters:
+ * the limit of 16 and printable-only ASCII are a cautious choice, not an M HUB limit.
  */
 export function buildProfileRename(slot: number, name: string): Buffer {
   if (!Number.isInteger(slot) || slot < 0 || slot >= PROFILE_COUNT) {
@@ -216,12 +216,12 @@ export function buildProfileRename(slot: number, name: string): Buffer {
   return encodeRequest(REPORT_LONG, 0x59, [slot, ...Array.from(name, (c) => c.charCodeAt(0))]);
 }
 
-/** 0x11 0x41 usbRate freeRate. Con il dongle si scrive freeRate. */
+/** 0x11 0x41 usbRate freeRate. With the dongle, freeRate is the one written. */
 export function buildPollingWrite(wireless: boolean, index: number): Buffer {
   return encodeRequest(REPORT_SHORT, 0x41, wireless ? [0, index] : [index, 0]);
 }
 
-/** Costruisce 0x12 0x40: indici attivi (usb, wireless), byte riservato, sei livelli X (e Y uguali), contatore. */
+/** Builds 0x12 0x40: active indexes (usb, wireless), reserved byte, six X levels (and equal Y), counter. */
 function encodeDpiWrite(usbIndex: number, wirelessIndex: number, reserved: number, dpi: number[], count: number): Buffer {
   if (dpi.length !== DPI_LEVELS) throw new Error("Exactly 6 DPI levels are required");
   if (!Number.isInteger(count) || count < 1 || count > DPI_LEVELS) {
@@ -240,8 +240,8 @@ function encodeDpiWrite(usbIndex: number, wirelessIndex: number, reserved: numbe
 }
 
 /**
- * 0x12 0x40: scrive i sei livelli DPI. Il byte riservato e' quello letto; gli indici attivi restano quelli
- * letti, salvo che debbano rientrare nel numero di livelli in uso (activeLevels, di default quello letto).
+ * 0x12 0x40: writes the six DPI levels. The reserved byte is the one that was read; the active indexes stay those
+ * that were read, unless they must fit within the number of levels in use (activeLevels, by default the one read).
  */
 export function buildDpiWrite(state: ProfileState, dpi: number[], activeLevels: number = state.activeLevels): Buffer {
   const last = Math.max(0, activeLevels - 1);
@@ -255,8 +255,8 @@ export function buildDpiWrite(state: ProfileState, dpi: number[], activeLevels: 
 }
 
 /**
- * Toglie un livello in uso: i successivi scalano di una posizione, il contatore cala di uno e il valore
- * tolto passa al primo posto non in uso. L'indice attivo segue il suo livello (o, se era quello tolto, resta valido).
+ * Removes a level in use: the following ones shift down by one, the counter drops by one and the removed
+ * value moves to the first unused place. The active index follows its level (or, if it was the removed one, stays valid).
  */
 export function buildLevelRemoval(state: ProfileState, index: number): Buffer {
   const count = state.activeLevels;
@@ -271,7 +271,7 @@ export function buildLevelRemoval(state: ProfileState, index: number): Buffer {
   return encodeDpiWrite(follow(state.usbDpiIndex), follow(state.wirelessDpiIndex), state.reserved, dpi, count - 1);
 }
 
-// ---------- Notifica 0xE2 ----------
+// ---------- 0xE2 notification ----------
 
 export interface Notification {
   battery: number;
@@ -281,7 +281,7 @@ export interface Notification {
   profile: number;
 }
 
-/** Decodifica una notifica (byte logici). Restituisce null se non e' una notifica 0xE2. */
+/** Decodes a notification (logical bytes). Returns null if it is not a 0xE2 notification. */
 export function parseNotification(logical: number[]): Notification | null {
   if (logical[0] !== 0xe2) return null;
   return {
@@ -293,14 +293,14 @@ export function parseNotification(logical: number[]): Notification | null {
   };
 }
 
-// ---------- Scritture del sensore (cattura reale, PROTOCOL.md 10.14-10.18) ----------
+// ---------- Sensor writes (real capture, PROTOCOL.md 10.14-10.18) ----------
 
 export interface SensorChange {
   lodMm?: 1 | 2;
   rippleControl?: boolean;
   angleSnapping?: boolean;
   motionSync?: boolean;
-  /** Gradi, -30..30. */
+  /** Degrees, -30..30. */
   rotate?: number;
 }
 
@@ -312,8 +312,8 @@ export const SLEEP_MAX = 63;
 const flag = (v: boolean | undefined) => (v === undefined ? 0 : v ? 1 : 2);
 
 /**
- * 0x11 0x42 `lod ripple line motionSync 0 0 0 rotateOpen rotateVal`. Come M HUB: manda sempre il LOD attuale
- * (o quello nuovo) e a zero cio' che non cambia. La modalita' (gameMode) non si scrive mai.
+ * 0x11 0x42 `lod ripple line motionSync 0 0 0 rotateOpen rotateVal`. Like M HUB: always sends the current LOD
+ * (or the new one) and zero for whatever does not change. The mode (gameMode) is never written.
  */
 export function buildSensorWrite(state: ProfileState, change: SensorChange): Buffer {
   if (change.lodMm !== undefined && change.lodMm !== 1 && change.lodMm !== 2) {
@@ -343,7 +343,7 @@ export function buildSensorWrite(state: ProfileState, change: SensorChange): Buf
   ]);
 }
 
-/** 0x11 0x43 ms. Limiti 1..20 dedotti dallo slider di M HUB. */
+/** 0x11 0x43 ms. Limits 1..20 inferred from the M HUB slider. */
 export function buildDebounceWrite(ms: number): Buffer {
   if (!Number.isInteger(ms) || ms < DEBOUNCE_MIN || ms > DEBOUNCE_MAX) {
     throw new Error(`Invalid debounce: ${ms} (allowed ${DEBOUNCE_MIN}..${DEBOUNCE_MAX} ms)`);
@@ -351,7 +351,7 @@ export function buildDebounceWrite(ms: number): Buffer {
   return encodeRequest(REPORT_SHORT, 0x43, [ms]);
 }
 
-/** 0x11 0x0A flag minuti: flag 1 = timer in minuti (1..63), 0 = never sleep (minuti 0). */
+/** 0x11 0x0A flag minutes: flag 1 = timer in minutes (1..63), 0 = never sleep (minutes 0). */
 export function buildSleepWrite(minutes: number): Buffer {
   if (!Number.isInteger(minutes) || minutes < 0 || minutes > SLEEP_MAX) {
     throw new Error(`Invalid sleep timer: ${minutes} (allowed 0 = never, or 1..${SLEEP_MAX} min)`);
@@ -359,7 +359,7 @@ export function buildSleepWrite(minutes: number): Buffer {
   return encodeRequest(REPORT_SHORT, 0x0a, minutes === 0 ? [0, 0] : [1, minutes]);
 }
 
-/** 0x12 0x52 `button 0 tipo v1 v2 v3` (cattura reale, PROTOCOL.md 10.19). Non controlla la protezione del sinistro: vedi keys.ts. */
+/** 0x12 0x52 `button 0 type v1 v2 v3` (real capture, PROTOCOL.md 10.19). Does not check the left-click protection: see keys.ts. */
 export function buildKeyWrite(button: number, action: KeyAction): Buffer {
   if (!Number.isInteger(button) || button < 0 || button >= BUTTON_COUNT) {
     throw new Error(`Invalid button: ${button} (allowed 0..${BUTTON_COUNT - 1})`);

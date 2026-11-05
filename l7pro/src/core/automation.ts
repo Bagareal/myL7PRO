@@ -2,7 +2,7 @@ import type { Snapshot } from "../shared/api.js";
 import { exeName, pickSlot, type Match } from "./rules.js";
 import type { Settings } from "./settings.js";
 
-/** La parte di MouseService che serve all'automazione. */
+/** The part of MouseService that automation needs. */
 export interface ProfileMouse {
   snapshot(): Snapshot;
   onSnapshot(fn: (s: Snapshot) => void): () => void;
@@ -10,10 +10,10 @@ export interface ProfileMouse {
 }
 
 export interface AutomationState {
-  /** Ultimo programma stabile in primo piano (ignora la finestra di L7 Pro e i valori sconosciuti). */
+  /** Last stable foreground program (ignores the myL7PRO window and unknown values). */
   foreground: string | null;
   match: Match;
-  /** Cambio manuale in corso: l'automazione aspetta che cambi l'app. */
+  /** A manual change is in effect: automation waits for the foreground app to change. */
   hold: boolean;
 }
 
@@ -21,7 +21,7 @@ interface Deps {
   mouse: ProfileMouse;
   getForeground: () => Promise<string | null>;
   getSettings: () => Settings;
-  /** Programmi che non devono mai cambiare il profilo (es. l'app stessa). */
+  /** Programs that must never change the profile (for example the app itself). */
   ignoreExes: string[];
 }
 
@@ -54,7 +54,7 @@ export class Automation {
   start(): void {
     if (this.timer) return;
     const snap = this.deps.mouse.snapshot();
-    this.prevProfile = snap.connection === "connesso" && snap.state ? snap.state.profile : null;
+    this.prevProfile = snap.connection === "connected" && snap.state ? snap.state.profile : null;
     this.offSnapshot = this.deps.mouse.onSnapshot((s) => this.onSnapshot(s));
     this.timer = setInterval(() => void this.tick(), this.pollMs);
     void this.tick();
@@ -78,13 +78,13 @@ export class Automation {
     };
   }
 
-  /** L'utente ha scelto un profilo a mano: l'automazione aspetta che cambi l'app in primo piano. */
+  /** The user picked a profile by hand: automation waits for the foreground app to change. */
   noteManualChange(): void {
     this.hold = true;
     this.emit();
   }
 
-  /** Le regole sono cambiate: riapplica subito per l'app attuale. */
+  /** The rules changed: apply them again right away for the current app. */
   refresh(): void {
     this.emit();
     void this.reconcile();
@@ -127,12 +127,12 @@ export class Automation {
   }
 
   private onSnapshot(s: Snapshot): void {
-    if (s.connection !== "connesso" || !s.state) {
+    if (s.connection !== "connected" || !s.state) {
       this.prevProfile = null;
     } else {
       const p = s.state.profile;
       if (this.prevProfile !== null && p !== this.prevProfile && !this.inflight && p !== this.lastRequested) {
-        this.hold = true; // cambio fatto dal mouse stesso
+        this.hold = true; // the change was made by the mouse itself
         this.emit();
       }
       this.prevProfile = p;
@@ -140,13 +140,13 @@ export class Automation {
     void this.reconcile();
   }
 
-  /** Porta il mouse sullo slot giusto per l'app attuale, solo se serve e solo se il mouse risponde. */
+  /** Moves the mouse to the right slot for the current app, only if needed and only if the mouse answers. */
   private async reconcile(): Promise<void> {
     if (this.hold || this.inflight || this.stable === null) return;
     const snap = this.deps.mouse.snapshot();
-    if (snap.connection !== "connesso" || !snap.state) return;
+    if (snap.connection !== "connected" || !snap.state) return;
     const settings = this.deps.getSettings();
-    if (settings.rules.length === 0) return; // niente regole: l'automazione non tocca il mouse
+    if (settings.rules.length === 0) return; // no rules: automation never touches the mouse
     const desired = pickSlot(this.stable, settings).slot;
     if (snap.state.profile === desired) return;
     this.inflight = true;
@@ -154,7 +154,7 @@ export class Automation {
     try {
       await this.deps.mouse.setProfile(desired);
     } catch {
-      /* il mouse non ha risposto: si riprova al prossimo giro */
+      /* the mouse did not answer: try again on the next round */
     } finally {
       this.inflight = false;
     }

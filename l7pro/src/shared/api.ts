@@ -1,8 +1,9 @@
 import type { AutomationState } from "../core/automation.js";
 import type { KeyAction, ProfileState, SensorChange } from "../core/protocol.js";
 import type { Settings } from "../core/settings.js";
+import type { UpdateInfo } from "../core/update.js";
 
-export type ConnectionState = "assente" | "connesso" | "sleep";
+export type ConnectionState = "absent" | "connected" | "sleep";
 
 export interface Snapshot {
   connection: ConnectionState;
@@ -52,9 +53,11 @@ export const CHANNELS = {
   listApps: "l7:automation:listApps",
   pickExe: "l7:automation:pickExe",
   setAutostart: "l7:setAutostart",
+  checkUpdate: "l7:checkUpdate",
+  openReleases: "l7:openReleases",
 } as const;
 
-/** API esposta all'interfaccia come window.l7 (tramite preload). */
+/** API exposed to the interface as window.l7 (through the preload). */
 export interface L7Api {
   get(): Promise<Snapshot>;
   onSnapshot(fn: (s: Snapshot) => void): () => void;
@@ -71,6 +74,8 @@ export interface L7Api {
   setKey(button: number, action: KeyAction): Promise<void>;
   restoreKeyDefaults(): Promise<void>;
   setAutostart(on: boolean): Promise<void>;
+  checkUpdate(): Promise<UpdateInfo>;
+  openReleases(): Promise<void>;
   automation: {
     get(): Promise<AutomationView>;
     onChange(fn: (v: AutomationView) => void): () => void;

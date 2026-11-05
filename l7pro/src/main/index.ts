@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { MouseService } from "../core/mouseService.js";
@@ -6,6 +6,7 @@ import type { KeyAction, SensorChange } from "../core/protocol.js";
 import { Transport, findDevices } from "../core/transport.js";
 import { Automation } from "../core/automation.js";
 import { SettingsStore } from "../core/settings.js";
+import { RELEASES_URL, checkForUpdate } from "../core/update.js";
 import { CHANNELS, type AutomationView } from "../shared/api.js";
 import { makeAutomationApi } from "./automationApi.js";
 import { getForegroundExe, listOpenApps } from "./foreground.js";
@@ -18,14 +19,14 @@ const service = new MouseService(() => {
   try {
     return Transport.open(found[0].path);
   } catch {
-    return null; // interfaccia occupata o dongle appena scollegato: si riprova
+    return null; // interface busy or dongle just unplugged: try again
   }
 });
 
 let win: BrowserWindow | null = null;
 let quitting = false;
-// Cerchiamo di restare nel tray alla chiusura della finestra nell'app installata; in sviluppo la X chiude davvero
-// (cosi' si riavvia con npm run app), salvo L7_TRAY=1 per provare il tray.
+// In the installed app, closing the window keeps the app in the tray; in development the X really closes it
+// (so it restarts with npm run app), unless L7_TRAY=1 is set to try the tray.
 const keepInTray = app.isPackaged || process.env["L7_TRAY"] === "1";
 const startHidden = process.argv.includes("--hidden");
 
@@ -45,7 +46,7 @@ function createWindow(): void {
     minWidth: 760,
     minHeight: 520,
     title: "myL7PRO",
-    // Nell'app installata vale l'icona dell'exe; il file serve solo in sviluppo.
+    // In the installed app the exe icon applies; the file is only needed in development.
     ...(app.isPackaged ? {} : { icon: join(import.meta.dirname, "../../build/icon.png") }),
     show: !startHidden,
     webPreferences: {
@@ -56,21 +57,21 @@ function createWindow(): void {
     },
   });
   win.setMenuBarVisibility(false);
-  // L'app non apre mai pagine esterne.
+  // The app never opens external pages.
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   win.webContents.on("will-navigate", (e) => e.preventDefault());
 
   if (process.env["ELECTRON_RENDERER_URL"]) void win.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   else void win.loadFile(join(import.meta.dirname, "../renderer/index.html"));
-  // Diagnostica per lo sviluppo: errori della pagina nel terminale e, con L7_SHOT=file.png, una schermata dopo il caricamento.
+  // Development diagnostics: page errors in the terminal and, with L7_SHOT=file.png, a screenshot after loading.
   win.webContents.on("console-message", (e) => console.log(`[pagina] ${e.message}`));
   win.webContents.on("did-fail-load", (_e, code, desc) => console.log(`[pagina] caricamento fallito: ${code} ${desc}`));
-  // Gli strumenti di diagnostica (screenshot e codice da variabile d'ambiente) non esistono nell'app installata.
+  // The diagnostic tools (screenshot and code from an environment variable) do not exist in the installed app.
   const shot = app.isPackaged ? undefined : process.env["L7_SHOT"];
   if (shot) {
     win.webContents.once("did-finish-load", () => {
       setTimeout(async () => {
-        // L7_EVAL: codice JS eseguito nella pagina prima dello scatto (solo diagnostica).
+        // L7_EVAL: JS code run in the page before the screenshot (diagnostics only).
         const code = process.env["L7_EVAL"];
         if (code) {
           const out = await win?.webContents.executeJavaScript(code);
@@ -124,7 +125,7 @@ if (!app.requestSingleInstanceLock()) {
     };
     const automationApi = makeAutomationApi({
       store: new SettingsStore(app.getPath("userData")),
-      // In sviluppo non si registra l'avvio automatico: punterebbe a electron.exe.
+      // In development the autostart is not registered: it would point to electron.exe.
       applyAutostart: (on) => {
         if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: on, args: ["--hidden"] });
       },
@@ -136,7 +137,7 @@ if (!app.requestSingleInstanceLock()) {
       getSettings: () => automationApi.settings(),
       ignoreExes: [ownExe],
     });
-    // Primo avvio dell'app installata: si parte con Windows, nascosta nel tray (poi lo si cambia in Settings).
+    // First run of the installed app: start with Windows, hidden in the tray (it can be changed in Settings).
     if (app.isPackaged && !existsSync(join(app.getPath("userData"), "settings.json"))) automationApi.setAutostart(true);
     automationApi.attach(automation);
     automation.onState(sendAutomation);
@@ -150,6 +151,8 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle(CHANNELS.listApps, () => listOpenApps([ownExe]));
     ipcMain.handle(CHANNELS.pickExe, () => pickExe(win));
     ipcMain.handle(CHANNELS.setAutostart, (_e, on: boolean) => automationApi.setAutostart(on));
+    ipcMain.handle(CHANNELS.checkUpdate, () => checkForUpdate(app.getVersion()));
+    ipcMain.handle(CHANNELS.openReleases, () => shell.openExternal(RELEASES_URL));
 
     const tray = createTray(
       {

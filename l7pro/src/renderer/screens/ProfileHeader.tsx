@@ -7,11 +7,11 @@ export function profileLabel(snap: Snapshot, slot: number): string {
   return snap.profileNames?.[slot] ?? `Profile ${slot + 1}`;
 }
 
-/** Nome del profilo aperto (chi lo usa lo rimonta con key={slot}, cosi' la modifica in corso non resta sul profilo sbagliato) con Rename (campo inline: Invio salva, Esc annulla) ed etichetta del profilo attivo. */
+/** Name of the open profile (callers remount it with key={slot}, so an edit in progress never stays on the wrong profile) with Rename (inline field: Enter saves, Esc cancels) and the active-profile badge. */
 export function ProfileHeader({ snap, slot }: { snap: Snapshot; slot: number }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const connected = snap.connection === "connesso";
+  const connected = snap.connection === "connected";
   const name = profileLabel(snap, slot);
 
   async function save() {

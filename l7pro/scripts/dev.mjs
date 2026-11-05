@@ -1,4 +1,4 @@
-// Avvia electron-vite senza ELECTRON_RUN_AS_NODE (impostata da VS Code: farebbe girare Electron come semplice Node).
+// Starts electron-vite without ELECTRON_RUN_AS_NODE (set by VS Code: it would make Electron run as plain Node).
 import { spawn } from "node:child_process";
 
 delete process.env.ELECTRON_RUN_AS_NODE;

@@ -1,25 +1,25 @@
 import base64, io, os, sys
 from PIL import Image, ImageDraw
 
-OUT = sys.argv[1]  # cartella build
+OUT = sys.argv[1]  # build folder
 SS = 8  # supersampling
 
 
 def glyph(size, stroke, color=(255, 255, 255, 255), pad=0.0, arcs=(30, 56)):
-    """Mouse wireless in bianco: corpo, tasti, rotella e due onde. Disegnato su 256 e scalato."""
+    """White wireless mouse: body, buttons, wheel and two waves. Drawn at 256 and scaled."""
     n = 256 * SS
     im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     s = SS
     w = int(stroke * s)
-    # corpo
+    # body
     d.rounded_rectangle([88 * s, 112 * s, 168 * s, 236 * s], radius=40 * s, outline=color, width=w)
-    # divisione dei tasti e rotella
+    # button split and wheel
     thin = max(1, int(stroke * 0.6 * s))
     d.line([128 * s, 112 * s, 128 * s, 152 * s], fill=color, width=thin)
     d.line([88 * s, 152 * s, 168 * s, 152 * s], fill=color, width=thin)
     d.rounded_rectangle([121 * s, 122 * s, 135 * s, 142 * s], radius=7 * s, fill=color)
-    # onde wireless sopra il mouse
+    # wireless waves above the mouse
     import math
     for r in arcs:
         box = [(128 - r) * s, (92 - r) * s, (128 + r) * s, (92 + r) * s]
@@ -28,7 +28,7 @@ def glyph(size, stroke, color=(255, 255, 255, 255), pad=0.0, arcs=(30, 56)):
             x = 128 + (r - stroke / 2) * math.cos(math.radians(ang))
             y = 92 + (r - stroke / 2) * math.sin(math.radians(ang))
             d.ellipse([(x - stroke / 2) * s, (y - stroke / 2) * s, (x + stroke / 2) * s, (y + stroke / 2) * s], fill=color)
-    # ritaglio sul contenuto e margine
+    # crop to the content and add the margin
     bbox = im.getbbox()
     im = im.crop(bbox)
     inner = int(size * (1 - 2 * pad))
@@ -57,7 +57,7 @@ tray = glyph(32, 24, pad=0.02, arcs=(40,))
 buf = io.BytesIO()
 tray.save(buf, "PNG")
 open(os.path.join(OUT, "tray.b64"), "w").write(base64.b64encode(buf.getvalue()).decode())
-# anteprime
+# previews
 prev = Image.new("RGBA", (512 + 40 + 128, 512), (30, 30, 34, 255))
 prev.alpha_composite(big, (0, 0))
 prev.alpha_composite(tray.resize((128, 128), Image.NEAREST), (552, 20))

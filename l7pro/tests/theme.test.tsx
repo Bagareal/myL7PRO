@@ -11,26 +11,26 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-describe("colore d'accento", () => {
-  it("accetta solo #rrggbb", () => {
+describe("accent color", () => {
+  it("accepts only #rrggbb", () => {
     expect(isAccent("#00e5ff")).toBe(true);
     expect(isAccent("red")).toBe(false);
     expect(isAccent("#fff")).toBe(false);
     expect(isAccent(null)).toBe(false);
   });
 
-  it("il testo sopra il colore e' nero sui colori chiari e bianco sugli scuri", () => {
+  it("the text on top of the color is black on light colors and white on dark ones", () => {
     expect(onAccent("#ffffff")).toBe("#000000");
     expect(onAccent("#00e5ff")).toBe("#000000");
     expect(onAccent("#202060")).toBe("#ffffff");
   });
 
-  it("un valore salvato non valido torna al colore di default", () => {
+  it("an invalid saved value goes back to the default color", () => {
     localStorage.setItem("l7.accent", "javascript:1");
     expect(loadAccent()).toBe(DEFAULT_ACCENT);
   });
 
-  it("in Settings un colore pronto si applica subito e resta salvato", async () => {
+  it("in Settings a preset color applies right away and stays saved", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
@@ -40,7 +40,7 @@ describe("colore d'accento", () => {
     expect(screen.getByRole("button", { name: "Accent #ff9d2e" }).getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("al riavvio si riapplica il colore salvato", async () => {
+  it("on restart the saved color is applied again", async () => {
     localStorage.setItem("l7.accent", "#a678ff");
     installFakeApi(connectedSnapshot());
     render(<App />);
@@ -48,7 +48,7 @@ describe("colore d'accento", () => {
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#a678ff");
   });
 
-  it("il selettore libero cambia il colore", async () => {
+  it("the free picker changes the color", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));

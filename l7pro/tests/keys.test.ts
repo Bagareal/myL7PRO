@@ -14,8 +14,8 @@ const head = (b: Buffer, n: number) => Array.from(b.subarray(0, n), (x) => x.toS
 const DEFAULT: KeyAction = { type: 0, value: [0, 0, 0] };
 const defaults = (): KeyAction[] => Array.from({ length: 6 }, () => ({ ...DEFAULT }));
 
-describe("buildKeyWrite (0x12 0x52, catture reali di M HUB, tasto 3)", () => {
-  // report 0x12, XOR 0xFF: 52 03 00 tipo v1 v2 v3
+describe("buildKeyWrite (0x12 0x52, real M HUB captures, button 3)", () => {
+  // report 0x12, XOR 0xFF: 52 03 00 type v1 v2 v3
   const cases: Array<[string, KeyAction, string]> = [
     ["Mute", functionById("mute").action, "12 ad fc ff fc 1d ff ff"],
     ["Back", functionById("back").action, "12 ad fc ff fe f7 ff ff"],
@@ -50,7 +50,7 @@ describe("buildKeyWrite (0x12 0x52, catture reali di M HUB, tasto 3)", () => {
     expect(head(buildKeyWrite(3, action), 8)).toBe(bytes);
   });
 
-  it("usa l'indice del tasto e rifiuta indici, tipi e byte non validi", () => {
+  it("uses the button index and rejects invalid indexes, types and bytes", () => {
     expect(head(buildKeyWrite(4, DEFAULT), 4)).toBe("12 ad fb ff");
     expect(() => buildKeyWrite(5, DEFAULT)).toThrow();
     expect(() => buildKeyWrite(-1, DEFAULT)).toThrow();
@@ -60,17 +60,17 @@ describe("buildKeyWrite (0x12 0x52, catture reali di M HUB, tasto 3)", () => {
   });
 });
 
-describe("catalogo funzioni", () => {
-  it("non contiene le funzioni non catturate", () => {
+describe("function catalog", () => {
+  it("does not contain functions that were not captured", () => {
     const ids = FUNCTIONS.map((f) => f.id);
     expect(ids).not.toContain("dpi-minus");
     expect(FUNCTIONS.some((f) => f.action.type === 10 || f.action.type === 4)).toBe(false);
   });
-  it("ha id unici", () => {
+  it("has unique ids", () => {
     const ids = FUNCTIONS.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
-  it("i tasti della tastiera hanno usage HID standard", () => {
+  it("keyboard keys have standard HID usages", () => {
     const usage = (label: string) => KEYBOARD_KEYS.find((k) => k.label === label)?.usage;
     expect([usage("A"), usage("Z"), usage("1"), usage("0"), usage("F1"), usage("F12"), usage("Enter"), usage("Esc"), usage("Tab")]).toEqual([
       0x04, 0x1d, 0x1e, 0x27, 0x3a, 0x45, 0x28, 0x29, 0x2b,
@@ -79,7 +79,7 @@ describe("catalogo funzioni", () => {
 });
 
 describe("describeAction", () => {
-  it("nomina le funzioni, anche quelle predefinite del tasto", () => {
+  it("names the functions, including the button's default ones", () => {
     expect(describeAction(DEFAULT, 0)).toBe("Default (Left button)");
     expect(describeAction(DEFAULT, 3)).toBe("Default (Advance)");
     expect(describeAction(functionById("mute").action, 3)).toBe("Mute");
@@ -96,37 +96,37 @@ describe("describeAction", () => {
   });
 });
 
-describe("keepsLeftClick: protezione del click sinistro", () => {
-  it("tutto predefinito: il click sinistro c'e'", () => {
+describe("keepsLeftClick: left click protection", () => {
+  it("all default: the left click is there", () => {
     expect(keepsLeftClick(defaults(), 3, functionById("mute").action)).toBe(true);
   });
-  it("rifiuta di togliere il click sinistro dal tasto sinistro se non c'e' altrove", () => {
+  it("refuses to remove the left click from the left button if it is not elsewhere", () => {
     expect(keepsLeftClick(defaults(), 0, functionById("disable").action)).toBe(false);
     expect(keepsLeftClick(defaults(), 0, keyboardAction(0x04, 0))).toBe(false);
     expect(keepsLeftClick(defaults(), 0, functionById("right").action)).toBe(false);
   });
-  it("permette di cambiare il sinistro se un altro tasto fa il click sinistro", () => {
+  it("allows changing the left button if another button does the left click", () => {
     const keys = defaults();
     keys[3] = functionById("left").action;
     expect(keepsLeftClick(keys, 0, functionById("right").action)).toBe(true);
   });
-  it("rifiuta di togliere il click sinistro da un altro tasto se e' l'unico", () => {
+  it("refuses to remove the left click from another button if it is the only one", () => {
     const keys = defaults();
     keys[0] = functionById("disable").action;
     keys[3] = functionById("left").action;
     expect(keepsLeftClick(keys, 3, functionById("mute").action)).toBe(false);
   });
-  it("il click sinistro esplicito sul tasto sinistro basta", () => {
+  it("an explicit left click on the left button is enough", () => {
     const keys = defaults();
     keys[0] = functionById("left").action;
     expect(keepsLeftClick(keys, 4, functionById("disable").action)).toBe(true);
   });
 });
 
-describe("parseProfileState: tasti", () => {
-  it("legge tipo e valore dei sei tasti dai byte 20-43", () => {
+describe("parseProfileState: buttons", () => {
+  it("reads type and value of the six buttons from bytes 20-43", () => {
     const d = new Array(64).fill(0);
-    d[20 + 3 * 4] = 0x33; // tasto 3: indice 3 (nibble alto), tipo 3
+    d[20 + 3 * 4] = 0x33; // button 3: index 3 (high nibble), type 3
     d[21 + 3 * 4] = 0xe2;
     const keys = parseProfileState(d).keys;
     expect(keys).toHaveLength(6);

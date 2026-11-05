@@ -5,16 +5,16 @@ import { L7Pro } from "./device.js";
 import type { HidLink } from "./transport.js";
 
 export interface MouseServiceOptions {
-  /** Intervallo di riprova quando il mouse non e' connesso. */
+  /** Retry interval while the mouse is not connected. */
   retryMs?: number;
-  /** Intervallo di controllo mentre e' connesso (rileva scollegamenti e cambi fatti dal mouse). */
+  /** Check interval while connected (detects unplugging and changes made on the mouse). */
   pollMs?: number;
-  /** Attesa tra scrittura e rilettura. */
+  /** Wait between a write and the read-back. */
   settleMs?: number;
 }
 
 const EMPTY: Snapshot = {
-  connection: "assente",
+  connection: "absent",
   battery: null,
   wireless: true,
   productId: null,
@@ -28,7 +28,7 @@ const EMPTY: Snapshot = {
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-/** Unico proprietario della connessione: mantiene lo stato letto dal mouse e serializza le scritture. */
+/** Single owner of the connection: keeps the state read from the mouse and serializes writes. */
 export class MouseService {
   private snap: Snapshot = { ...EMPTY };
   private listeners: Array<(s: Snapshot) => void> = [];
@@ -36,7 +36,7 @@ export class MouseService {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private running = false;
   private chain: Promise<unknown> = Promise.resolve();
-  /** Dopo una rinomina i nomi vanno riletti al prossimo giro. */
+  /** After a rename the names must be read again on the next round. */
   private namesStale = false;
   private readonly retryMs: number;
   private readonly pollMs: number;
@@ -83,25 +83,25 @@ export class MouseService {
     for (const l of [...this.listeners]) l(this.snap);
   }
 
-  /** Programma il prossimo giro (un solo timer alla volta). */
+  /** Schedules the next round (one timer at a time). */
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = this.running
-      ? setTimeout(() => void this.cycle(), this.snap.connection === "connesso" ? this.pollMs : this.retryMs)
+      ? setTimeout(() => void this.cycle(), this.snap.connection === "connected" ? this.pollMs : this.retryMs)
       : null;
   }
 
-  /** Il canale e' morto o muto: lo chiude, cosi' il prossimo giro lo riapre (o scopre che il dongle non c'e' piu'). */
+  /** The channel is dead or silent: close it, so the next round reopens it (or finds the dongle is gone). */
   private dropMouse(): void {
     try {
       this.mouse?.close();
     } catch {
-      /* gia' chiuso */
+      /* already closed */
     }
     this.mouse = null;
   }
 
-  /** Un giro di connessione/lettura; si riprogramma da solo finche' non e' tutto connesso. */
+  /** One connect/read round; it reschedules itself until everything is connected. */
   private cycle(): Promise<void> {
     const run = this.chain.then(async () => {
       if (!this.running) return;
@@ -109,13 +109,13 @@ export class MouseService {
         if (!this.mouse) {
           const link = this.connect();
           if (!link) {
-            this.publish({ ...EMPTY, connection: "assente" });
+            this.publish({ ...EMPTY, connection: "absent" });
             return;
           }
           this.mouse = new L7Pro(link);
         }
         await this.refresh(this.mouse);
-        this.publish({ connection: "connesso", error: null });
+        this.publish({ connection: "connected", error: null });
       } catch (e) {
         this.dropMouse();
         this.publish({ connection: "sleep", error: message(e) });
@@ -139,12 +139,12 @@ export class MouseService {
     this.publish(next);
   }
 
-  /** Esegue una scrittura in coda; dopo averla inviata rilegge lo stato per verificarla. */
+  /** Runs a queued write; after sending it, reads the state back to verify it. */
   private write(build: (mouse: L7Pro, state: ProfileState) => Buffer): Promise<void> {
     const run = this.chain.then(async () => {
       const mouse = this.mouse;
       const state = this.snap.state;
-      if (this.snap.connection !== "connesso" || !mouse || !state) throw new Error("Mouse not connected");
+      if (this.snap.connection !== "connected" || !mouse || !state) throw new Error("Mouse not connected");
       const request = build(mouse, state);
       await mouse.transport.send(request);
       await sleep(this.settleMs);
@@ -185,22 +185,22 @@ export class MouseService {
     });
   }
 
-  /** Quanti livelli DPI il tasto del mouse scorre (1..6). I valori dei livelli non cambiano. */
+  /** How many DPI levels the mouse button cycles through (1..6). The level values do not change. */
   setLevelCount(count: number): Promise<void> {
     return this.write((_mouse, state) => buildDpiWrite(state, state.dpi, count));
   }
 
-  /** Toglie proprio quel livello (i successivi scalano di una posizione). */
+  /** Removes exactly that level (the following ones shift down by one). */
   removeLevel(index: number): Promise<void> {
     return this.write((_mouse, state) => buildLevelRemoval(state, index));
   }
 
-  /** Valori di fabbrica di M HUB (Restore defaults): sei livelli, tutti in uso. L'indice attivo resta valido. */
+  /** M HUB factory values (Restore defaults): six levels, all in use. The active index stays valid. */
   restoreDpiDefaults(): Promise<void> {
     return this.write((_mouse, state) => buildDpiWrite(state, DPI_FACTORY, DPI_LEVELS));
   }
 
-  /** LOD, ripple, angle snapping, motion sync, rotate (0x11 0x42). Mai la modalita'. */
+  /** LOD, ripple, angle snapping, motion sync, rotate (0x11 0x42). Never the mode. */
   setSensor(change: SensorChange): Promise<void> {
     return this.write((_mouse, state) => buildSensorWrite(state, change));
   }
@@ -214,7 +214,7 @@ export class MouseService {
     return this.write(() => buildSleepWrite(minutes));
   }
 
-  /** Assegna la funzione di un tasto (0x12 0x52). Rifiuta se toglie l'ultimo click sinistro. */
+  /** Assigns a button function (0x12 0x52). Refuses if it removes the last left click. */
   setKey(button: number, action: KeyAction): Promise<void> {
     return this.write((_mouse, state) => {
       const request = buildKeyWrite(button, action);
@@ -225,7 +225,7 @@ export class MouseService {
     });
   }
 
-  /** Rimette predefiniti i tasti cambiati, a partire dal sinistro (cosi' il click sinistro resta sempre assegnato). */
+  /** Restores the changed buttons to default, starting with the left one (so a left click always stays assigned). */
   async restoreKeyDefaults(): Promise<void> {
     for (let button = 0; button < BUTTON_COUNT; button++) {
       const state = this.snap.state;

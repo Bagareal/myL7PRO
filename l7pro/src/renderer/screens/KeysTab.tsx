@@ -19,14 +19,14 @@ import topUrl from "../assets/l7_top.png";
 
 const GROUPS: KeyGroup[] = ["Mouse", "DPI", "Edit", "Multimedia", "Other"];
 
-// Riquadro con le foto ritagliate (senza sfondo): coordinate in pixel. Le foto sono 778x1478 (alto) e 507x1453 (laterale).
+// Box with the cut-out photos (no background): pixel coordinates. The photos are 778x1478 (top) and 507x1453 (side).
 const STAGE = { width: 620, height: 400, label: { width: 128, height: 50 } };
 const TOP = { left: 245, top: 8, width: 170, height: 323 };
 const SIDE = { left: 520, top: 150, width: 80, height: 229 };
 const onTop = (x: number, y: number): [number, number] => [TOP.left + TOP.width * x, TOP.top + TOP.height * y];
 const onSide = (x: number, y: number): [number, number] => [SIDE.left + SIDE.width * x, SIDE.top + SIDE.height * y];
-// `dot` = punto sul tasto, `label` = angolo in alto a sinistra dell'etichetta, `edge` = punto dell'etichetta da cui parte la
-// linea, `knee` = dove la linea orizzontale si piega verso il punto. Middle sta sopra Right: le linee non si incrociano.
+// `dot` = point on the button, `label` = top-left corner of the label, `edge` = point of the label where the
+// line starts, `knee` = where the horizontal line bends toward the point. Middle sits above Right: the lines never cross.
 const SPOTS: Record<number, { dot: [number, number]; label: [number, number]; edge: [number, number]; knee: [number, number] }> = {
   0: { dot: onTop(0.27, 0.3), label: [0, 26], edge: [128, 51], knee: [190, 51] },
   1: { dot: onTop(0.5, 0.16), label: [492, 26], edge: [492, 51], knee: [450, 51] },
@@ -34,12 +34,12 @@ const SPOTS: Record<number, { dot: [number, number]; label: [number, number]; ed
   3: { dot: onTop(0.012, 0.36), label: [0, 150], edge: [128, 175], knee: [190, 175] },
   4: { dot: onTop(0.012, 0.49), label: [0, 230], edge: [128, 255], knee: [190, 255] },
 };
-// Vista laterale: i due tasti laterali.
+// Side view: the two side buttons.
 const SIDE_DOTS: Record<number, [number, number]> = { 3: onSide(0.45, 0.39), 4: onSide(0.5, 0.55) };
 
 type Pending = { kind: "assign"; button: number; action: KeyAction } | { kind: "restore" };
 
-/** Scheda Keys del profilo attivo: tasti del mouse a sinistra, funzioni a destra (PROTOCOL.md 10.19). */
+/** Keys tab of the active profile: mouse buttons on the left, functions on the right (PROTOCOL.md 10.19). */
 export function KeysTab({ snap }: { snap: Snapshot }) {
   const state = snap.state;
   const [selected, setSelected] = useState(3);

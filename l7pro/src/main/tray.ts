@@ -3,7 +3,7 @@ import type { Snapshot } from "../shared/api.js";
 import { TRAY_ICON_PNG_BASE64 } from "./trayIcon.js";
 import { trayTemplate, trayTooltip, type TrayActions } from "./trayTemplate.js";
 
-/** Icona nella barra di sistema, con menu che segue lo stato del mouse. */
+/** System tray icon, with a menu that follows the mouse state. */
 export function createTray(actions: TrayActions, initial: Snapshot) {
   const icon = nativeImage.createFromBuffer(Buffer.from(TRAY_ICON_PNG_BASE64, "base64"));
   const tray = new Tray(icon);

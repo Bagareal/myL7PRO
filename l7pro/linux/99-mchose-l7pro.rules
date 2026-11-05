@@ -1,4 +1,4 @@
-# Accesso hidraw al dongle MCHOSE L7 Pro (VID 0x5253, PID 0x1020 e 0x1021) per l'utente che ha la sessione attiva.
-# Copiare in /etc/udev/rules.d/ poi: sudo udevadm control --reload-rules && sudo udevadm trigger
+# hidraw access to the MCHOSE L7 Pro dongle (VID 0x5253, PID 0x1020 and 0x1021) for the user with the active session.
+# Copy to /etc/udev/rules.d/ then: sudo udevadm control --reload-rules && sudo udevadm trigger
 KERNEL=="hidraw*", ATTRS{idVendor}=="5253", ATTRS{idProduct}=="1020", TAG+="uaccess"
 KERNEL=="hidraw*", ATTRS{idVendor}=="5253", ATTRS{idProduct}=="1021", TAG+="uaccess"

@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: Settings = { version: 1, defaultSlot: 0, rules: [
 const validSlot = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) < PROFILE_COUNT;
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
-/** Ripulisce qualunque dato letto dal file: non lancia mai errori. */
+/** Cleans up whatever was read from the file: never throws. */
 export function sanitizeSettings(raw: unknown): Settings {
   if (!isObject(raw)) return { ...DEFAULT_SETTINGS, rules: [] };
   const seen = new Set<string>();
@@ -49,7 +49,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   };
 }
 
-/** Impostazioni in `settings.json` dentro la cartella dati dell'utente. */
+/** Settings in `settings.json` inside the user's data folder. */
 export class SettingsStore {
   private readonly file: string;
 
@@ -68,7 +68,7 @@ export class SettingsStore {
         try {
           copyFileSync(this.file, `${this.file}.bak`);
         } catch {
-          /* copia di sicurezza non riuscita: si parte comunque da zero */
+          /* backup copy failed: start from scratch anyway */
         }
       }
       return sanitizeSettings(null);

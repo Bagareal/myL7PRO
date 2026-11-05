@@ -1,8 +1,9 @@
+import type { UpdateInfo } from "../src/core/update.js";
 import type { AutomationView, OpenApp, Snapshot } from "../src/shared/api.js";
 
 export function connectedSnapshot(patch: Partial<Snapshot> = {}): Snapshot {
   return {
-    connection: "connesso",
+    connection: "connected",
     battery: 93,
     wireless: true,
     productId: 0x1020,
@@ -32,7 +33,7 @@ export function connectedSnapshot(patch: Partial<Snapshot> = {}): Snapshot {
 
 export const absentSnapshot = (): Snapshot =>
   connectedSnapshot({
-    connection: "assente",
+    connection: "absent",
     battery: null,
     firmware: null,
     state: null,
@@ -49,7 +50,7 @@ export const defaultAutomationView = (): AutomationView => ({
 /** window.l7 finto: restituisce lo snapshot dato e permette di emetterne altri. */
 export function installFakeApi(
   initial: Snapshot,
-  extra: { automation?: AutomationView; apps?: OpenApp[]; picked?: { exe: string; label: string } | null } = {},
+  extra: { automation?: AutomationView; apps?: OpenApp[]; picked?: { exe: string; label: string } | null; update?: UpdateInfo } = {},
 ) {
   const listeners: Array<(s: Snapshot) => void> = [];
   const automationListeners: Array<(v: AutomationView) => void> = [];
@@ -78,6 +79,11 @@ export function installFakeApi(
     setKey: async (b, a) => void calls.push(["setKey", b, a]),
     restoreKeyDefaults: async () => void calls.push(["restoreKeyDefaults"]),
     setAutostart: async (on) => void calls.push(["setAutostart", on]),
+    checkUpdate: async () => {
+      calls.push(["checkUpdate"]);
+      return extra.update ?? { current: "1.0.0", latest: "1.0.0", available: false, url: "https://github.com/Bagareal/myL7PRO/releases" };
+    },
+    openReleases: async () => void calls.push(["openReleases"]),
     automation: {
       get: async () => automationView,
       onChange: (fn) => {

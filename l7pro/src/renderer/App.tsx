@@ -19,7 +19,7 @@ function profileName(s: Snapshot): string {
 function Header({ snap }: { snap: Snapshot | null }) {
   let status: React.ReactNode;
   if (!snap) status = <span className="muted">Connecting...</span>;
-  else if (snap.connection === "assente") status = <span className="warn">Mouse not found</span>;
+  else if (snap.connection === "absent") status = <span className="warn">Mouse not found</span>;
   else if (snap.connection === "sleep") status = <span className="warn">Mouse asleep, retrying</span>;
   else
     status = (
@@ -52,7 +52,7 @@ export function App() {
     };
   }, []);
 
-  // Finche' non si sceglie nulla si segue il profilo attivo del mouse.
+  // Until something is chosen, follow the mouse's active profile.
   const view: View = chosen ?? { kind: "profile", slot: snap?.state?.profile ?? 0 };
   const names = SLOTS.map((i) => (snap ? profileLabel(snap, i) : `Profile ${i + 1}`));
   const activeSlot = snap?.state?.profile;
@@ -62,6 +62,7 @@ export function App() {
       <Header snap={snap} />
       <div className="body">
         <nav className="sidebar">
+          <div className="nav-title">Profiles</div>
           {SLOTS.map((i) => (
             <div key={i} className="navrow">
               <button
@@ -76,7 +77,7 @@ export function App() {
           ))}
           <hr />
           <button className={view.kind === "trigger" ? "active" : ""} onClick={() => setChosen({ kind: "trigger" })}>
-            Trigger
+            Triggers
           </button>
           <button className={view.kind === "settings" ? "active" : ""} onClick={() => setChosen({ kind: "settings" })}>
             Settings

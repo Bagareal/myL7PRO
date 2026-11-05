@@ -24,14 +24,14 @@ const apps = [
 async function open(automation = view(), snap = connectedSnapshot(), extra: Parameters<typeof installFakeApi>[1] = {}) {
   const api = installFakeApi(snap, { automation, apps, ...extra });
   render(<App />);
-  fireEvent.click(await screen.findByRole("button", { name: "Trigger" }));
-  await screen.findByRole("heading", { name: "Trigger" });
+  fireEvent.click(await screen.findByRole("button", { name: "Triggers" }));
+  await screen.findByRole("heading", { name: "Triggers" });
   return api;
 }
 const select = (name: string) => screen.getByRole("combobox", { name }) as HTMLSelectElement;
 
-describe("Automation: profilo normale", () => {
-  it("mostra i tre profili e quello normale attuale, e cambiarlo scrive subito", async () => {
+describe("Automation: normal profile", () => {
+  it("shows the three profiles and the current normal one, and changing it writes right away", async () => {
     const api = await open(view({ defaultSlot: 0 }));
     const s = (await screen.findByRole("combobox", { name: "Default profile" })) as HTMLSelectElement;
     expect(Array.from(s.options).map((o) => o.textContent)).toEqual(["Default1", "TheFinals", "Default3"]);
@@ -42,13 +42,13 @@ describe("Automation: profilo normale", () => {
   });
 });
 
-describe("Automation: regole", () => {
-  it("senza regole spiega che l'automazione non fa niente", async () => {
+describe("Automation: rules", () => {
+  it("without rules it explains that automation does nothing", async () => {
     await open(view());
     expect(await screen.findByText("No rules yet. Triggers do nothing until you add one.")).toBeTruthy();
   });
 
-  it("mostra ogni regola con etichetta, programma e profilo", async () => {
+  it("shows every rule with label, program and profile", async () => {
     await open(view({ rules }));
     expect(await screen.findByText("Apex Legends")).toBeTruthy();
     expect(screen.getByText("r5apex.exe")).toBeTruthy();
@@ -56,7 +56,7 @@ describe("Automation: regole", () => {
     expect(select("Profile for THE FINALS").value).toBe("1");
   });
 
-  it("cambiare profilo, spostare e togliere una regola scrive subito", async () => {
+  it("changing the profile, moving and removing a rule writes right away", async () => {
     const api = await open(view({ rules }));
     await screen.findByText("Apex Legends");
     fireEvent.change(select("Profile for Apex Legends"), { target: { value: "0" } });
@@ -73,14 +73,14 @@ describe("Automation: regole", () => {
     );
   });
 
-  it("la prima regola non puo' salire e l'ultima non puo' scendere", async () => {
+  it("the first rule cannot move up and the last cannot move down", async () => {
     await open(view({ rules }));
     await screen.findByText("Apex Legends");
     expect((screen.getByRole("button", { name: "Move Apex Legends up" }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole("button", { name: "Move THE FINALS down" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("si aggiorna quando le impostazioni cambiano", async () => {
+  it("updates when the settings change", async () => {
     const api = await open(view());
     await screen.findByText("No rules yet. Triggers do nothing until you add one.");
     act(() => api.emitAutomation(view({ rules })));
@@ -94,7 +94,7 @@ describe("Automation: Add app", () => {
     return screen.findByRole("dialog", { name: "Add app" });
   };
 
-  it("elenca i programmi aperti e la scelta aggiunge una regola subito sul profilo 0", async () => {
+  it("lists the open programs and choosing one adds a rule right away on profile 0", async () => {
     const api = await open(view());
     const panel = await openPanel();
     expect(await within(panel).findByText("Brave Browser")).toBeTruthy();
@@ -103,7 +103,7 @@ describe("Automation: Add app", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("la ricerca filtra per etichetta, programma o titolo", async () => {
+  it("the search filters by label, program or title", async () => {
     await open(view());
     const panel = await openPanel();
     await within(panel).findByText("Brave Browser");
@@ -112,7 +112,7 @@ describe("Automation: Add app", () => {
     expect(within(panel).getByText("Visual Studio Code")).toBeTruthy();
   });
 
-  it("i programmi che hanno gia' una regola non si possono aggiungere", async () => {
+  it("programs that already have a rule cannot be added", async () => {
     await open(view({ rules }));
     const panel = await openPanel();
     const finals = (await within(panel).findByRole("button", { name: /THE FINALS/ })) as HTMLButtonElement;
@@ -120,14 +120,14 @@ describe("Automation: Add app", () => {
     expect(within(panel).getByText("already added")).toBeTruthy();
   });
 
-  it("Browse aggiunge il programma scelto nella finestra di Windows", async () => {
+  it("Browse adds the program chosen in the Windows dialog", async () => {
     const api = await open(view(), connectedSnapshot(), { picked: { exe: "r5apex.exe", label: "r5apex" } });
     const panel = await openPanel();
     fireEvent.click(within(panel).getByRole("button", { name: "Browse..." }));
     await waitFor(() => expect(api.calls).toEqual([["addRule", "r5apex.exe", "r5apex", 0]]));
   });
 
-  it("se annulli la scelta del file non succede nulla e il pannello resta aperto", async () => {
+  it("if you cancel the file choice nothing happens and the panel stays open", async () => {
     const api = await open(view(), connectedSnapshot(), { picked: null });
     const panel = await openPanel();
     fireEvent.click(within(panel).getByRole("button", { name: "Browse..." }));
@@ -136,7 +136,7 @@ describe("Automation: Add app", () => {
     expect(screen.getByRole("dialog", { name: "Add app" })).toBeTruthy();
   });
 
-  it("Close chiude il pannello senza scrivere", async () => {
+  it("Close closes the panel without writing", async () => {
     const api = await open(view());
     const panel = await openPanel();
     fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
@@ -144,7 +144,7 @@ describe("Automation: Add app", () => {
     expect(api.calls).toEqual([]);
   });
 
-  it("un errore di scrittura viene mostrato", async () => {
+  it("a write error is shown", async () => {
     await open(view());
     window.l7.automation.addRule = async () => {
       throw new Error("code.exe already has a rule");
@@ -155,18 +155,18 @@ describe("Automation: Add app", () => {
   });
 });
 
-describe("Automation: stato attuale", () => {
-  it("mostra il programma in primo piano e il profilo che ne segue", async () => {
+describe("Automation: current state", () => {
+  it("shows the foreground program and the profile that follows from it", async () => {
     await open(view({ rules }, { foreground: "discovery.exe", match: { slot: 1, rule: rules[1] } }));
     expect(await screen.findByText("Right now: discovery.exe -> TheFinals")).toBeTruthy();
   });
 
-  it("con un cambio manuale in corso lo dice", async () => {
+  it("says so when a manual change is in effect", async () => {
     await open(view({ rules }, { foreground: "discovery.exe", match: { slot: 1, rule: rules[1] }, hold: true }));
     expect(await screen.findByText(/manual change, waiting for the next app/)).toBeTruthy();
   });
 
-  it("senza mouse avvisa ma le regole restano modificabili", async () => {
+  it("without a mouse it warns but the rules stay editable", async () => {
     const api = await open(view({ rules }), absentSnapshot());
     expect(await screen.findByText("Mouse not found", { selector: ".note" })).toBeTruthy();
     fireEvent.change(select("Default profile"), { target: { value: "1" } });

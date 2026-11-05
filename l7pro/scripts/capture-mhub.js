@@ -1,6 +1,6 @@
-// Da incollare nella Console di Chrome (F12) sulla pagina di M HUB, PRIMA di fare le azioni.
-// Registra solo i feature report inviati al mouse (non legge nulla dal mouse e non scrive nulla da solo).
-// Per vedere il risultato: copy(window.__cap.join("\n"))  poi incollare nel messaggio.
+// Paste into the Chrome Console (F12) on the M HUB page, BEFORE doing the actions.
+// Records only the feature reports sent to the mouse (it reads nothing from the mouse and writes nothing by itself).
+// To see the result: copy(window.__cap.join("\n"))  then paste it into the message.
 (() => {
   window.__cap = [];
   const orig = HIDDevice.prototype.sendFeatureReport;

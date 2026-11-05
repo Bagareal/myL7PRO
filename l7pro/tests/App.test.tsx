@@ -7,8 +7,8 @@ import { absentSnapshot, connectedSnapshot, installFakeApi } from "./snapshots.j
 
 afterEach(cleanup);
 
-describe("App: intestazione", () => {
-  it("mostra mouse, batteria e profilo attivo quando e' connesso", async () => {
+describe("App: header", () => {
+  it("shows mouse, battery and active profile when connected", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     expect(await screen.findByText("myL7PRO")).toBeTruthy();
@@ -16,20 +16,20 @@ describe("App: intestazione", () => {
     expect(screen.getByText("Active profile: Default1")).toBeTruthy();
   });
 
-  it("senza mouse mostra 'Mouse not found' e nessuna batteria", async () => {
+  it("without a mouse it shows 'Mouse not found' and no battery", async () => {
     installFakeApi(absentSnapshot());
     render(<App />);
     expect(await screen.findByText("Mouse not found")).toBeTruthy();
     expect(screen.queryByText(/Battery/)).toBeNull();
   });
 
-  it("in sleep mostra 'Mouse asleep, retrying'", async () => {
+  it("when asleep it shows 'Mouse asleep, retrying'", async () => {
     installFakeApi(connectedSnapshot({ connection: "sleep" }));
     render(<App />);
     expect(await screen.findByText("Mouse asleep, retrying")).toBeTruthy();
   });
 
-  it("si aggiorna quando arriva un nuovo snapshot", async () => {
+  it("updates when a new snapshot arrives", async () => {
     const api = installFakeApi(connectedSnapshot());
     render(<App />);
     await screen.findByText("Battery 93%");
@@ -38,14 +38,14 @@ describe("App: intestazione", () => {
   });
 });
 
-describe("App: menu laterale", () => {
-  it("ha i profili, Trigger e Settings nell'ordine deciso", async () => {
+describe("App: side menu", () => {
+  it("has the profiles, Triggers and Settings in the decided order", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
     const nav = await screen.findByRole("navigation");
     const labels = within(nav)
       .getAllByRole("button")
       .map((b) => b.textContent);
-    expect(labels).toEqual(["Default1", "TheFinals", "Default3", "Trigger", "Settings"]);
+    expect(labels).toEqual(["Default1", "TheFinals", "Default3", "Triggers", "Settings"]);
   });
 });

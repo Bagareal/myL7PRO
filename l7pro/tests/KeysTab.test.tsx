@@ -24,8 +24,8 @@ function withKey(index: number, type: number, value: [number, number, number]) {
   return s;
 }
 
-describe("Keys tab: lettura", () => {
-  it("mostra i cinque tasti con la funzione attuale", async () => {
+describe("Keys tab: reading", () => {
+  it("shows the five buttons with their current function", async () => {
     await open();
     expect(key("Left button").textContent).toContain("Default (Left button)");
     expect(key("Middle button").textContent).toContain("Default (Middle button)");
@@ -34,7 +34,7 @@ describe("Keys tab: lettura", () => {
     expect(key("Back").textContent).toContain("Default (Back)");
   });
 
-  it("nomina le funzioni assegnate, anche quelle sconosciute", async () => {
+  it("names the assigned functions, including unknown ones", async () => {
     await open(withKey(3, 3, [0xe2, 0, 0]));
     expect(key("Advance").textContent).toContain("Mute");
     cleanup();
@@ -45,21 +45,21 @@ describe("Keys tab: lettura", () => {
     expect(key("Back").textContent).toContain("Other (type 10)");
   });
 
-  it("aprirla non scrive niente", async () => {
+  it("opening it writes nothing", async () => {
     const api = await open();
     expect(api.calls).toEqual([]);
   });
 });
 
-describe("Keys tab: scritture", () => {
-  it("parte da Advance: scegliere una funzione la assegna subito, senza dialogo", async () => {
+describe("Keys tab: writes", () => {
+  it("starts on Advance: choosing a function assigns it right away, without a dialog", async () => {
     const api = await open();
     fireEvent.click(fnButton("Mute"));
     await waitFor(() => expect(api.calls).toEqual([["setKey", 3, functionById("mute").action]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("Back si assegna subito come Advance", async () => {
+  it("Back is assigned right away like Advance", async () => {
     const api = await open();
     fireEvent.click(key("Back"));
     fireEvent.click(fnButton("Play/Pause"));
@@ -71,7 +71,7 @@ describe("Keys tab: scritture", () => {
     ["Left button", 0],
     ["Middle button", 1],
     ["Right button", 2],
-  ])("%s chiede conferma prima di scrivere", async (name, index) => {
+  ])("%s asks for confirmation before writing", async (name, index) => {
     const api = await open();
     fireEvent.click(key(name));
     fireEvent.click(fnButton("Mute"));
@@ -82,7 +82,7 @@ describe("Keys tab: scritture", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("Cancel nel dialogo non scrive niente", async () => {
+  it("Cancel in the dialog writes nothing", async () => {
     const api = await open();
     fireEvent.click(key("Left button"));
     fireEvent.click(fnButton("Disabled"));
@@ -91,7 +91,7 @@ describe("Keys tab: scritture", () => {
     expect(api.calls).toEqual([]);
   });
 
-  it("tastiera: tasto e modificatori scelti, poi Assign", async () => {
+  it("keyboard: key and modifiers chosen, then Assign", async () => {
     const api = await open();
     fireEvent.change(screen.getByLabelText("Keyboard key"), { target: { value: "C" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Ctrl" }));
@@ -99,7 +99,7 @@ describe("Keys tab: scritture", () => {
     await waitFor(() => expect(api.calls).toEqual([["setKey", 3, keyboardAction(0x06, 0x01)]]));
   });
 
-  it("tastiera: due modificatori", async () => {
+  it("keyboard: two modifiers", async () => {
     const api = await open();
     fireEvent.change(screen.getByLabelText("Keyboard key"), { target: { value: "Esc" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Ctrl" }));
@@ -108,14 +108,14 @@ describe("Keys tab: scritture", () => {
     await waitFor(() => expect(api.calls).toEqual([["setKey", 3, keyboardAction(0x29, 0x03)]]));
   });
 
-  it("la funzione si vede subito, prima della conferma del mouse", async () => {
+  it("the function shows right away, before the mouse confirms", async () => {
     await open();
     window.l7.setKey = () => new Promise<void>(() => {});
     fireEvent.click(fnButton("Mute"));
     expect(key("Advance").textContent).toContain("Mute");
   });
 
-  it("un errore di scrittura viene mostrato e il tasto torna com'era", async () => {
+  it("a write error is shown and the button goes back to how it was", async () => {
     await open();
     window.l7.setKey = async () => {
       throw new Error("At least one button must keep the left click");
@@ -127,14 +127,14 @@ describe("Keys tab: scritture", () => {
 });
 
 describe("Keys tab: Restore defaults", () => {
-  it("rimette predefiniti i tasti, senza dialogo se toccano solo i laterali", async () => {
+  it("restores the buttons to default, without a dialog if only the side ones are touched", async () => {
     const api = await open(withKey(3, 3, [0xe2, 0, 0]));
     fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
     await waitFor(() => expect(api.calls).toEqual([["restoreKeyDefaults"]]));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("chiede conferma se un tasto principale e' stato cambiato", async () => {
+  it("asks for confirmation if a main button was changed", async () => {
     const api = await open(withKey(2, 9, [0xff, 0xff, 0xff]));
     fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
     expect(await screen.findByRole("dialog")).toBeTruthy();
@@ -143,7 +143,7 @@ describe("Keys tab: Restore defaults", () => {
     await waitFor(() => expect(api.calls).toEqual([["restoreKeyDefaults"]]));
   });
 
-  it("e' disabilitato se tutto e' gia' predefinito", async () => {
+  it("is disabled when everything is already default", async () => {
     await open();
     expect((screen.getByRole("button", { name: "Restore defaults" }) as HTMLButtonElement).disabled).toBe(true);
   });

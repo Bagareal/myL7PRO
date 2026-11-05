@@ -23,6 +23,8 @@ const api: L7Api = {
   setKey: (button, action) => ipcRenderer.invoke(CHANNELS.setKey, button, action),
   restoreKeyDefaults: () => ipcRenderer.invoke(CHANNELS.restoreKeyDefaults),
   setAutostart: (on) => ipcRenderer.invoke(CHANNELS.setAutostart, on),
+  checkUpdate: () => ipcRenderer.invoke(CHANNELS.checkUpdate),
+  openReleases: () => ipcRenderer.invoke(CHANNELS.openReleases),
   automation: {
     get: () => ipcRenderer.invoke(CHANNELS.automationGet),
     onChange(fn) {

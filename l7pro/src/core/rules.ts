@@ -5,12 +5,12 @@ export interface Match {
   rule: Rule | null;
 }
 
-/** Nome del file senza percorso e in minuscolo. */
+/** File name without the path, in lower case. */
 export function exeName(exe: string): string {
   return exe.slice(Math.max(exe.lastIndexOf("\\"), exe.lastIndexOf("/")) + 1).toLowerCase();
 }
 
-/** Sceglie lo slot per il programma in primo piano: la prima regola che corrisponde, altrimenti il profilo normale. */
+/** Picks the slot for the foreground program: the first matching rule, otherwise the normal profile. */
 export function pickSlot(exe: string | null, s: Pick<Settings, "defaultSlot" | "rules">): Match {
   if (exe) {
     const name = exeName(exe);
