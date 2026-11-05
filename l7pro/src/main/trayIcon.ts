@@ -1,0 +1,2 @@
+// Icona 32x32 generata (cerchio blu con una L bianca), incorporata per non dipendere da file esterni.
+export const TRAY_ICON_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAcklEQVR42u3XQQ4AEAwEQJ/xMs/3CM4cKN3Gok0cZefENoSbJqZcJOdIqAlGG65CoMK3EOjwJYRVuAhhHT5EzC71A0f8DZBcQAMahAMc4AAH7AAkA30N0QD1X/Ae4HghoahkFKWUopZTLCYUqxnFcmo9FXsOq9rXO27AAAAAAElFTkSuQmCC";

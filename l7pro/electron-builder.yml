@@ -1,0 +1,20 @@
+appId: com.bagareal.myl7pro
+productName: L7 Pro
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - node_modules/node-hid/**
+  - node_modules/active-win/**
+win:
+  target:
+    - target: nsis
+      arch: x64
+  artifactName: L7Pro-Setup-${version}.${ext}
+nsis:
+  oneClick: true
+  perMachine: false
+  runAfterFinish: true
+publish: null

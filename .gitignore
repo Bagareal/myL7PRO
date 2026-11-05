@@ -1,0 +1,7 @@
+node_modules/
+out/
+release/
+.superpowers/
+# Bundle di M HUB (di MCHOSE): solo lettura locale, non si ridistribuisce
+work/
+*.log
