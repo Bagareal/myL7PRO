@@ -30,6 +30,14 @@ describe("DPI tab: livelli", () => {
     expect(applyDpi().disabled).toBe(true);
   });
 
+  it("il livello attivo del mouse e' evidenziato e gli altri no", async () => {
+    await open();
+    const rows = [0, 1, 2].map((n) => slider(n).closest("label")!);
+    expect(rows.map((r) => r.getAttribute("aria-current"))).toEqual([null, null, "true"]);
+    expect(rows[2].textContent).toContain("Active");
+    expect(rows[0].textContent).not.toContain("Active");
+  });
+
   it("sotto gli slider ci sono i segni delle tacche, una per valore", async () => {
     await open();
     const listId = slider(2).getAttribute("list");

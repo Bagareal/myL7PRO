@@ -10,6 +10,8 @@ export function DpiTab({ snap }: { snap: Snapshot }) {
   const current = state?.dpi ?? [];
   const currentKey = current.join(",");
   const inUse = state?.activeLevels ?? 0;
+  // Livello attivo del collegamento wireless (il dongle); il mouse lo riporta in ogni lettura dello stato.
+  const active = state?.wirelessDpiIndex ?? -1;
 
   const [values, setValues] = useState<number[]>(() => [...current]);
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +55,11 @@ export function DpiTab({ snap }: { snap: Snapshot }) {
       </datalist>
       <div className="dpi-grid">
         {levels.map((i) => (
-          <label key={i} className="dpi-row">
-            <span>{`Level ${i}`}</span>
+          <label key={i} className={i === active ? "dpi-row current" : "dpi-row"} aria-current={i === active ? "true" : undefined}>
+            <span className="dpi-name">
+              {`Level ${i}`}
+              {i === active && <em className="active-tag">Active</em>}
+            </span>
             <input
               type="range"
               aria-label={`Level ${i}`}
