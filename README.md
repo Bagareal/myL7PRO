@@ -10,15 +10,15 @@ Status: **Windows first**. Linux is planned.
 
 | DPI levels, active level highlighted | Performance |
 |---|---|
-| ![DPI](docs/screenshots/dpi.png) | ![Performance](docs/screenshots/performance.png) |
+| ![DPI](screenshots/dpi.png) | ![Performance](screenshots/performance.png) |
 
 | Key assignment | Trigger (profile per app) |
 |---|---|
-| ![Keys](docs/screenshots/keys.png) | ![Trigger](docs/screenshots/trigger.png) |
+| ![Keys](screenshots/keys.png) | ![Trigger](screenshots/trigger.png) |
 
 | Settings (accent color, start with Windows, firmware info) |
 |---|
-| ![Settings](docs/screenshots/settings.png) |
+| ![Settings](screenshots/settings.png) |
 
 ## What it does
 
@@ -64,6 +64,4 @@ npm run check      # type check
 npm run dist       # build the Windows installer into l7pro/release
 ```
 
-Pushing a tag such as `v1.0.2` builds the installer on GitHub and publishes a release.
-
-The project documents (design specs, plans, hardware notes) are in [docs/](docs/).
+Pushing a tag such as `v1.0.4` builds the installer on GitHub and publishes a release.

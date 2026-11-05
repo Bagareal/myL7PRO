@@ -2,6 +2,9 @@ node_modules/
 out/
 release/
 .superpowers/
-# Bundle di M HUB (di MCHOSE): solo lettura locale, non si ridistribuisce
+# M HUB bundle (MCHOSE property): local read-only reference, never redistributed
 work/
 *.log
+# Local only: working notes and project documents
+CLAUDE.md
+docs/
