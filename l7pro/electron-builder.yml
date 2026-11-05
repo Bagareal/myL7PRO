@@ -1,5 +1,5 @@
 appId: com.bagareal.myl7pro
-productName: L7 Pro
+productName: myL7PRO
 directories:
   output: release
 files:
@@ -12,7 +12,7 @@ win:
   target:
     - target: nsis
       arch: x64
-  artifactName: L7Pro-Setup-${version}.${ext}
+  artifactName: myL7PRO-Setup-${version}.${ext}
 nsis:
   oneClick: true
   perMachine: false

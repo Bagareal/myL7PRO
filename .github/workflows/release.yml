@@ -26,5 +26,5 @@ jobs:
       - run: npm run dist
       - uses: softprops/action-gh-release@v2
         with:
-          files: l7pro/release/L7Pro-Setup-*.exe
+          files: l7pro/release/myL7PRO-Setup-*.exe
           generate_release_notes: true

@@ -11,7 +11,7 @@ describe("App: intestazione", () => {
   it("mostra mouse, batteria e profilo attivo quando e' connesso", async () => {
     installFakeApi(connectedSnapshot());
     render(<App />);
-    expect(await screen.findByText("L7 Pro")).toBeTruthy();
+    expect(await screen.findByText("myL7PRO")).toBeTruthy();
     expect(screen.getByText("Battery 93%")).toBeTruthy();
     expect(screen.getByText("Active profile: Default1")).toBeTruthy();
   });

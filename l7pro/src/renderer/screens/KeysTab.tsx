@@ -14,23 +14,28 @@ import type { KeyAction } from "../../core/protocol.js";
 import type { Snapshot } from "../../shared/api.js";
 import { ConfirmDialog } from "../components/ConfirmDialog.js";
 import { cleanError } from "../errors.js";
-import sideUrl from "../assets/l7_black_side.jpg";
-import topUrl from "../assets/l7_black.jpg";
+import sideUrl from "../assets/l7_side.png";
+import topUrl from "../assets/l7_top.png";
 
 const GROUPS: KeyGroup[] = ["Mouse", "DPI", "Edit", "Multimedia", "Other"];
 
-// Riquadro con la foto dall'alto: coordinate in pixel del riquadro. `dot` = punto sul tasto, `label` = angolo in alto a sinistra
-// dell'etichetta, `edge` = punto dell'etichetta da cui parte la linea.
-const STAGE = { width: 460, height: 420, label: { width: 110, height: 50 } };
-const SPOTS: Record<number, { dot: [number, number]; label: [number, number]; edge: [number, number] }> = {
-  0: { dot: [178, 113], label: [0, 36], edge: [110, 61] },
-  2: { dot: [282, 113], label: [350, 36], edge: [350, 61] },
-  1: { dot: [227, 92], label: [350, 106], edge: [350, 131] },
-  3: { dot: [129, 165], label: [0, 140], edge: [110, 165] },
-  4: { dot: [129, 220], label: [0, 205], edge: [110, 230] },
+// Riquadro con le foto ritagliate (senza sfondo): coordinate in pixel. Le foto sono 778x1478 (alto) e 507x1453 (laterale).
+const STAGE = { width: 620, height: 400, label: { width: 128, height: 50 } };
+const TOP = { left: 245, top: 8, width: 170, height: 323 };
+const SIDE = { left: 520, top: 150, width: 80, height: 229 };
+const onTop = (x: number, y: number): [number, number] => [TOP.left + TOP.width * x, TOP.top + TOP.height * y];
+const onSide = (x: number, y: number): [number, number] => [SIDE.left + SIDE.width * x, SIDE.top + SIDE.height * y];
+// `dot` = punto sul tasto, `label` = angolo in alto a sinistra dell'etichetta, `edge` = punto dell'etichetta da cui parte la
+// linea, `knee` = dove la linea orizzontale si piega verso il punto. Middle sta sopra Right: le linee non si incrociano.
+const SPOTS: Record<number, { dot: [number, number]; label: [number, number]; edge: [number, number]; knee: [number, number] }> = {
+  0: { dot: onTop(0.27, 0.3), label: [0, 26], edge: [128, 51], knee: [190, 51] },
+  1: { dot: onTop(0.5, 0.16), label: [492, 26], edge: [492, 51], knee: [450, 51] },
+  2: { dot: onTop(0.73, 0.3), label: [492, 96], edge: [492, 121], knee: [450, 121] },
+  3: { dot: onTop(0.012, 0.36), label: [0, 150], edge: [128, 175], knee: [190, 175] },
+  4: { dot: onTop(0.012, 0.49), label: [0, 230], edge: [128, 255], knee: [190, 255] },
 };
-// Vista laterale (angolo in basso a destra): i due tasti laterali.
-const SIDE = { left: 350, top: 232, width: 100, height: 180, dots: { 3: [30, 71], 4: [33, 98] } as Record<number, [number, number]> };
+// Vista laterale: i due tasti laterali.
+const SIDE_DOTS: Record<number, [number, number]> = { 3: onSide(0.45, 0.39), 4: onSide(0.5, 0.55) };
 
 type Pending = { kind: "assign"; button: number; action: KeyAction } | { kind: "restore" };
 
@@ -113,26 +118,27 @@ export function KeysTab({ snap }: { snap: Snapshot }) {
       )}
       <div className="keys-layout">
         <div className="keys-stage" style={{ width: STAGE.width, height: STAGE.height }}>
-          <img className="stage-top" src={topUrl} alt="" />
+          <img className="stage-img" src={topUrl} alt="" style={{ left: TOP.left, top: TOP.top, width: TOP.width }} />
+          <img className="stage-img" src={sideUrl} alt="" style={{ left: SIDE.left, top: SIDE.top, width: SIDE.width }} />
           <svg className="stage-lines" width={STAGE.width} height={STAGE.height} aria-hidden="true">
-            {BUTTONS.map((b) => (
-              <g key={b.index} className={b.index === selected ? "spot active" : "spot"} onClick={() => setSelected(b.index)}>
-                <line x1={SPOTS[b.index].edge[0]} y1={SPOTS[b.index].edge[1]} x2={SPOTS[b.index].dot[0]} y2={SPOTS[b.index].dot[1]} />
-                <circle cx={SPOTS[b.index].dot[0]} cy={SPOTS[b.index].dot[1]} r="6" />
+            {BUTTONS.map((b) => {
+              const sp = SPOTS[b.index];
+              return (
+                <g key={b.index} className={b.index === selected ? "spot active" : "spot"} onClick={() => setSelected(b.index)}>
+                  <polyline points={`${sp.edge.join(",")} ${sp.knee.join(",")} ${sp.dot.join(",")}`} />
+                  <circle className="ring" cx={sp.dot[0]} cy={sp.dot[1]} r="9" />
+                  <circle cx={sp.dot[0]} cy={sp.dot[1]} r="4.5" />
+                </g>
+              );
+            })}
+            {[3, 4].map((i) => (
+              <g key={i} className={i === selected ? "spot active" : "spot"} onClick={() => setSelected(i)}>
+                <circle className="ring" cx={SIDE_DOTS[i][0]} cy={SIDE_DOTS[i][1]} r="9" />
+                <circle cx={SIDE_DOTS[i][0]} cy={SIDE_DOTS[i][1]} r="4.5" />
               </g>
             ))}
           </svg>
           {BUTTONS.map((b) => keyButton(b.index))}
-          <div className="stage-side" style={{ left: SIDE.left, top: SIDE.top, width: SIDE.width, height: SIDE.height }}>
-            <img src={sideUrl} alt="" />
-            <svg width={SIDE.width} height={SIDE.height} aria-hidden="true">
-              {[3, 4].map((i) => (
-                <g key={i} className={i === selected ? "spot active" : "spot"} onClick={() => setSelected(i)}>
-                  <circle cx={SIDE.dots[i][0]} cy={SIDE.dots[i][1]} r="6" />
-                </g>
-              ))}
-            </svg>
-          </div>
         </div>
 
         <div className="keys-picker">

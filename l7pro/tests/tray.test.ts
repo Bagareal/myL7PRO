@@ -8,7 +8,7 @@ describe("trayTemplate", () => {
   it("ha Open, i tre profili e Quit, divisi da separatori", () => {
     const t = trayTemplate(connectedSnapshot(), actions());
     expect(t.map((i) => i.type === "separator" ? "---" : i.label)).toEqual([
-      "Open L7 Pro",
+      "Open myL7PRO",
       "---",
       "Default1",
       "TheFinals",
@@ -27,7 +27,7 @@ describe("trayTemplate", () => {
   it("i clic chiamano le azioni giuste", () => {
     const a = actions();
     const t = trayTemplate(connectedSnapshot(), a);
-    t.find((i) => i.label === "Open L7 Pro")!.click!();
+    t.find((i) => i.label === "Open myL7PRO")!.click!();
     t.find((i) => i.label === "Default3")!.click!();
     t.find((i) => i.label === "Quit")!.click!();
     expect(a.open).toHaveBeenCalledTimes(1);
@@ -38,7 +38,7 @@ describe("trayTemplate", () => {
   it("senza mouse i profili sono disabilitati ma Open e Quit restano attivi", () => {
     const t = trayTemplate(absentSnapshot(), actions());
     expect(t.filter((i) => i.type === "radio").every((p) => p.enabled === false)).toBe(true);
-    expect(t.find((i) => i.label === "Open L7 Pro")!.enabled).not.toBe(false);
+    expect(t.find((i) => i.label === "Open myL7PRO")!.enabled).not.toBe(false);
     expect(t.find((i) => i.label === "Quit")!.enabled).not.toBe(false);
   });
 
@@ -50,14 +50,14 @@ describe("trayTemplate", () => {
 
 describe("trayTooltip", () => {
   it("mostra batteria e profilo attivo", () => {
-    expect(trayTooltip(connectedSnapshot())).toBe("L7 Pro - Battery 93% - Default1");
+    expect(trayTooltip(connectedSnapshot())).toBe("myL7PRO - Battery 93% - Default1");
   });
 
   it("senza mouse dice che non e' stato trovato", () => {
-    expect(trayTooltip(absentSnapshot())).toBe("L7 Pro - Mouse not found");
+    expect(trayTooltip(absentSnapshot())).toBe("myL7PRO - Mouse not found");
   });
 
   it("in sleep lo dice", () => {
-    expect(trayTooltip(connectedSnapshot({ connection: "sleep" }))).toBe("L7 Pro - Mouse asleep");
+    expect(trayTooltip(connectedSnapshot({ connection: "sleep" }))).toBe("myL7PRO - Mouse asleep");
   });
 });

@@ -4,6 +4,7 @@ import { Automation } from "./screens/Automation.js";
 import { ProfilePage } from "./screens/ProfilePage.js";
 import { profileLabel } from "./screens/ProfileHeader.js";
 import { Settings } from "./screens/Settings.js";
+import { applyAccent, loadAccent } from "./theme.js";
 
 type View = { kind: "profile"; slot: number } | { kind: "trigger" } | { kind: "settings" };
 
@@ -29,7 +30,7 @@ function Header({ snap }: { snap: Snapshot | null }) {
     );
   return (
     <header className="header">
-      <strong>L7 Pro</strong>
+      <strong>myL7PRO</strong>
       <div className="status">{status}</div>
     </header>
   );
@@ -38,6 +39,8 @@ function Header({ snap }: { snap: Snapshot | null }) {
 export function App() {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [chosen, setChosen] = useState<View | null>(null);
+
+  useEffect(() => applyAccent(loadAccent()), []);
 
   useEffect(() => {
     let alive = true;

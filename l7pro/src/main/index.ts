@@ -44,7 +44,7 @@ function createWindow(): void {
     height: 680,
     minWidth: 760,
     minHeight: 520,
-    title: "L7 Pro",
+    title: "myL7PRO",
     show: !startHidden,
     webPreferences: {
       preload: join(import.meta.dirname, "../preload/index.cjs"),
