@@ -169,12 +169,13 @@ section > button + button { margin-left: 8px; }
 .keys-stage { position: relative; flex: none; box-sizing: content-box; border-radius: 4px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); }
 .stage-img { position: absolute; height: auto; pointer-events: none; user-select: none; }
 .stage-lines { position: absolute; inset: 0; }
-.stage-lines polyline { fill: none; stroke: var(--accent); stroke-width: 1; opacity: 0.55; }
+.stage-lines polyline { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.45; }
 .spot { cursor: pointer; }
-.spot circle { fill: var(--accent); }
-.spot .ring { fill: none; stroke: var(--accent); opacity: 0.3; }
-.spot.active polyline { opacity: 1; }
-.spot.active .ring { opacity: 0.9; }
+.spot circle { fill: var(--muted); }
+.spot .ring { fill: none; stroke: var(--muted); opacity: 0.3; }
+.spot.active polyline { stroke: var(--accent); opacity: 1; }
+.spot.active circle:not(.ring) { fill: var(--accent); }
+.spot.active .ring { stroke: var(--accent); opacity: 0.9; }
 .key-btn { position: absolute; display: grid; align-content: center; gap: 1px; text-align: left; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
 .key-btn span { font-size: 10px; color: var(--muted); }
 .key-btn.active { border-color: var(--accent); }

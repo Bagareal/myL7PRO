@@ -28,11 +28,11 @@ const onSide = (x: number, y: number): [number, number] => [SIDE.left + SIDE.wid
 // `dot` = point on the button, `label` = top-left corner of the label, `edge` = point of the label where the
 // line starts, `knee` = where the horizontal line bends toward the point. Middle sits above Right: the lines never cross.
 const SPOTS: Record<number, { dot: [number, number]; label: [number, number]; edge: [number, number]; knee: [number, number] }> = {
-  0: { dot: onTop(0.27, 0.3), label: [0, 26], edge: [128, 51], knee: [190, 51] },
-  1: { dot: onTop(0.5, 0.16), label: [492, 26], edge: [492, 51], knee: [450, 51] },
-  2: { dot: onTop(0.73, 0.3), label: [492, 96], edge: [492, 121], knee: [450, 121] },
-  3: { dot: onTop(0.012, 0.36), label: [0, 150], edge: [128, 175], knee: [190, 175] },
-  4: { dot: onTop(0.012, 0.49), label: [0, 230], edge: [128, 255], knee: [190, 255] },
+  0: { dot: onTop(0.27, 0.3), label: [12, 26], edge: [140, 51], knee: [190, 51] },
+  1: { dot: onTop(0.5, 0.16), label: [480, 26], edge: [480, 51], knee: [450, 51] },
+  2: { dot: onTop(0.73, 0.3), label: [480, 96], edge: [480, 121], knee: [450, 121] },
+  3: { dot: onTop(0.012, 0.36), label: [12, 150], edge: [140, 175], knee: [190, 175] },
+  4: { dot: onTop(0.012, 0.49), label: [12, 230], edge: [140, 255], knee: [190, 255] },
 };
 // Side view: the two side buttons.
 const SIDE_DOTS: Record<number, [number, number]> = { 3: onSide(0.45, 0.39), 4: onSide(0.5, 0.55) };
