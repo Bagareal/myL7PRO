@@ -51,6 +51,7 @@ export interface HidLink {
 export class Transport implements HidLink {
   private queue: Promise<unknown> = Promise.resolve();
   private listeners: Array<(logical: number[]) => void> = [];
+  private closed = false;
 
   private constructor(private dev: HID.HID) {
     dev.on("data", (buf: Buffer) => {
@@ -68,8 +69,20 @@ export class Transport implements HidLink {
     return new Transport(new HID.HID(path));
   }
 
+  /** Idempotent: closing a node-hid device twice, or using it after closing, corrupts the native heap. */
   close(): void {
-    this.dev.close();
+    if (this.closed) return;
+    this.closed = true;
+    this.listeners = [];
+    try {
+      this.dev.close();
+    } catch {
+      /* already gone */
+    }
+  }
+
+  private assertOpen(): void {
+    if (this.closed) throw new Error("Channel closed");
   }
 
   /** Listens to input reports (logical data, already inverted). Returns the function that stops listening. */
@@ -106,6 +119,7 @@ export class Transport implements HidLink {
   /** Sends an already encoded request and waits for the confirmation (best effort). */
   send(request: Buffer): Promise<boolean> {
     return this.enqueue(async () => {
+      this.assertOpen();
       const cmd = request[1] ^ 0xff;
       const confirm = this.waitConfirm(cmd, 400);
       this.dev.sendFeatureReport(Array.from(request));
@@ -124,9 +138,11 @@ export class Transport implements HidLink {
       const request = encodeRequest(reportId, cmd, args);
       const size = reportId === REPORT_LONG ? 65 : 21;
       for (let attempt = 0; attempt < 6; attempt++) {
+        this.assertOpen();
         const confirm = this.waitConfirm(cmd, 200);
         this.dev.sendFeatureReport(Array.from(request));
         await confirm;
+        this.assertOpen();
         const raw = Buffer.from(this.dev.getFeatureReport(reportId, size));
         const res = decodeResponse(raw);
         if (res.cmd === cmd && isPlausible(res.data)) return res;
