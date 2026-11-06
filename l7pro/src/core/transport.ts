@@ -14,6 +14,8 @@ import {
 } from "./protocol.js";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+/** Pause after a request when no confirmation is read (the answer is checked and retried anyway). */
+const SETTLE_MS = 40;
 
 export interface FoundDevice {
   path: string;
@@ -44,6 +46,8 @@ export interface HidLink {
     isPlausible?: (data: number[]) => boolean,
   ): Promise<Response>;
   send(request: Buffer): Promise<boolean>;
+  /** Starts reading the input reports in the background (development CLI only, see Transport.listen). */
+  listen?(): void;
   onInput(fn: (logical: number[]) => void): () => void;
   close(): void;
 }
@@ -53,15 +57,27 @@ export class Transport implements HidLink {
   private listeners: Array<(logical: number[]) => void> = [];
   private closed = false;
 
+  private listening = false;
+
   private constructor(private dev: HID.HID) {
-    dev.on("data", (buf: Buffer) => {
+    dev.on("error", () => {
+      /* mouse unplugged or asleep: handled by the requests with a timeout */
+    });
+  }
+
+  /**
+   * Starts node-hid's background read thread, to see the input reports (confirmations, 0xE2 notifications).
+   * The app never calls it: that thread running next to the feature reports corrupted the native heap
+   * (crash 0xc0000374 after a few minutes). Only the development CLI uses it.
+   */
+  listen(): void {
+    if (this.listening) return;
+    this.listening = true;
+    this.dev.on("data", (buf: Buffer) => {
       // On Windows the buffer may start with the report ID: we strip it when recognized.
       const body = [REPORT_CONFIRM, REPORT_SHORT, REPORT_LONG].includes(buf[0]) ? buf.subarray(1) : buf;
       const logical = unxor(body);
       for (const l of [...this.listeners]) l(logical);
-    });
-    dev.on("error", () => {
-      /* mouse unplugged or asleep: handled by the requests with a timeout */
     });
   }
 
@@ -100,7 +116,9 @@ export class Transport implements HidLink {
     return run;
   }
 
+  /** Waits for the 0xE5 confirmation when listening; otherwise just gives the mouse a moment to answer. */
   private waitConfirm(cmd: number, timeoutMs: number): Promise<boolean> {
+    if (!this.listening) return sleep(Math.min(timeoutMs, SETTLE_MS)).then(() => false);
     return new Promise((resolve) => {
       const stop = this.onInput((l) => {
         if (l[0] === 0xe5 && l[1] === cmd) {

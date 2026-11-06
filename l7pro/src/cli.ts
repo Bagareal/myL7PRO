@@ -95,6 +95,7 @@ async function main() {
       console.log(`Raw bytes (logical): ${hex(raw)}`);
       console.log(`Battery: ${status.battery}% (charge: ${status.charge}, mode: ${status.connectMode}, connected: ${status.connected})`);
     } else if (cmd === "monitor") {
+      mouse.transport.listen?.();
       mouse.transport.onInput((l) => console.log(hex(l)));
       console.log("Input reports (logical bytes). Ctrl+C to quit.");
       await new Promise(() => undefined);
@@ -102,6 +103,7 @@ async function main() {
       const target = Number(rest[0]);
       const req = mouse.buildProfileSwitch(target);
       if (await confirm(`Onboard profile switch -> ${target}`, req, dryRun)) {
+        mouse.transport.listen?.();
         const stop = mouse.transport.onInput((l) => {
           const n = parseNotification(l);
           console.log(`Input report: ${hex(l.slice(0, 20))}`);

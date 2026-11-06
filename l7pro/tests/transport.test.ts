@@ -5,7 +5,9 @@ const devices: FakeDevice[] = [];
 class FakeDevice {
   closeCalls = 0;
   featureCalls = 0;
-  on(): this {
+  listened: string[] = [];
+  on(event: string): this {
+    this.listened.push(event);
     return this;
   }
   close(): void {
@@ -36,6 +38,25 @@ vi.mock("node-hid", () => ({
 }));
 
 import { Transport } from "../src/core/transport.js";
+
+describe("Transport reading", () => {
+  it("does not start the background read thread by default (it corrupts the heap next to feature reports)", () => {
+    Transport.open("x");
+    expect(devices[devices.length - 1].listened).not.toContain("data");
+  });
+
+  it("starts it only when asked (development CLI)", () => {
+    const t = Transport.open("x");
+    t.listen();
+    t.listen();
+    expect(devices[devices.length - 1].listened.filter((e) => e === "data")).toHaveLength(1);
+  });
+
+  it("still completes reads and writes without background reads", async () => {
+    const t = Transport.open("x");
+    await expect(t.send(Buffer.from([0x11, 0x00]))).resolves.toBe(false);
+  });
+});
 
 describe("Transport close", () => {
   it("closes the native device only once", () => {
